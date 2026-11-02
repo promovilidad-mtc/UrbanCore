@@ -292,12 +292,22 @@
     ],
     activar(){ activo = true; corrLayer.addTo(map); ovLayer.addTo(map); llenarSelectorRutas(); renderResultados(); dibujar(); },
     desactivar(){ activo = false; map.removeLayer(corrLayer); map.removeLayer(ovLayer); },
-    serializar:() => corredores.length ? { corredores:corredores.map(c => ({ nombre:c.nombre, ida:[...c.ida], vuelta:[...c.vuelta] })) } : null,
+    serializar:() => corredores.length ? { corredores:corredores.map(c => ({ nombre:c.nombre, atributos:c.atributos, ida:[...c.ida], vuelta:[...c.vuelta] })) } : null,
     cargar(d){
-      corredores = (d && Array.isArray(d.corredores) ? d.corredores : []).map((c, i) => completar({ nombre:c.nombre,
+      corredores = (d && Array.isArray(d.corredores) ? d.corredores : []).map((c, i) => completar({ nombre:c.nombre, atributos:c.atributos,
         ida:new Set((c.ida || []).filter(id => UC.red.porId.has(id))), vuelta:new Set((c.vuelta || []).filter(id => UC.red.porId.has(id))) }, i));
       despuesDeCargar();
     },
     usosDeTramo(id){ return corredores.filter(c => c.todos.has(id)).map(c => `Corredor ${c.nombre}`); }
   });
+
+  // API para Atributos: lista de corredores y refresco tras cambiar un nombre (sin perder el corredor elegido)
+  UC.cobertura = {
+    lista:() => corredores,
+    refrescar(){
+      const sel = el('cb-sel');
+      corredores.forEach((c, i) => { const o = sel.querySelector(`option[value="${i}"]`); if(o) o.textContent = c.nombre; });
+      if(activo) renderResultados();
+    }
+  };
 })();

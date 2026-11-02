@@ -641,7 +641,7 @@
    Diseño anterior (glass): afrovial.html?tema=glass   |   Abrir en oscuro: afrovial.html?tema=oscuro
    Bordes: gris fino por defecto; para bordes negros cambia --g-borde (modo claro) a #202124.
    El lienzo del Editor se mantiene claro en ambos modos (es el "papel" donde se dibuja el flujograma). */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url('vendor/roboto/roboto.css');   /* Roboto local; si falta, se usa la fuente del sistema */
 
 :root{
   --g-azul:#1a73e8; --g-azul-osc:#1765cc; --g-azul-claro:#e8f0fe; --g-azul-claro-h:#d2e3fc; --g-azul-texto:#1967d2; --g-sobre-azul:#fff;
@@ -850,8 +850,167 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 })();
 </script>
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
+  <!-- Librerías locales (carpeta vendor/) para trabajar sin internet; si no están, se usan las del CDN -->
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'" />
+  <script src="vendor/apexcharts/apexcharts.min.js"></script>
+  <script>window.ApexCharts||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"><\/script>');</script>
+  <script>
+  /* Si los gráficos no cargan (sin internet y sin vendor/), la app sigue funcionando sin ellos.
+     Antes, cargar una sesión fallaba con "¿Es un JSON de AforoCore?" por esta causa. */
+  if(!window.ApexCharts){
+    window.ApexCharts=function(){ return {render(){return Promise.resolve();},destroy(){},updateOptions(){},updateSeries(){}}; };
+    window._sinGraficos=true;
+  }
+  </script>
+<style id="mapa-estilos">
+/* ── Fondo desde mapa ── */
+#mapa-overlay{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;background:rgba(32,33,36,.55);padding:16px}
+#mapa-overlay.show{display:flex}
+#mapa-modal{background:var(--surface,#fff);color:var(--text,#202124);border:1px solid var(--border,#dadce0);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.28);width:min(1280px,100%);height:min(820px,100%);display:flex;overflow:hidden;font-family:var(--font)}
+#mp-mapa{flex:1;min-width:0;background:#e8eaed}
+#mp-panel{width:360px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid var(--border,#dadce0)}
+.mp-cab{padding:14px 16px 10px;border-bottom:1px solid var(--border,#dadce0)}
+.mp-titulo{font-size:16px;font-weight:600}
+.mp-sub{font-size:12px;color:var(--text-sec,#5f6368);margin-top:2px}
+.mp-cuerpo{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:14px}
+.mp-seccion-tit{font-size:12px;font-weight:600;color:var(--text-sec,#5f6368);margin-bottom:6px}
+.mp-fila{display:flex;gap:6px;align-items:center}
+.mp-fila input[type=text],#mp-fondo{flex:1;min-width:0;font-size:13px;padding:7px 9px;border:1px solid var(--border,#dadce0);border-radius:6px;background:var(--surface,#fff);color:var(--text,#202124);font-family:inherit}
+#mp-estado{font-size:12px;line-height:1.4;padding:8px 10px;border-radius:6px;background:var(--bg,#f8f9fa);color:var(--text-sec,#5f6368)}
+#mp-estado.error{background:#fce8e6;color:#c5221f}
+.mp-pierna{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border-lt,#e8eaed)}
+.mp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mp-pierna-info{flex:1;min-width:0}
+.mp-pierna-nom{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-pierna-sub{font-size:11px;color:var(--text-sec,#5f6368)}
+.mp-pierna select{font-size:11px;padding:3px;border:1px solid var(--border,#dadce0);border-radius:5px;background:var(--surface,#fff);color:var(--text,#202124);max-width:92px}
+.mp-pierna input{width:50px;font-size:11px;padding:3px;border:1px solid var(--border,#dadce0);border-radius:5px;background:var(--surface,#fff);color:var(--text,#202124)}
+.mp-x{border:none;background:none;color:var(--text-sec,#5f6368);cursor:pointer;padding:4px}
+.mp-vacio{font-size:12px;color:var(--text-sec,#5f6368);padding:6px 0}
+.mp-pie{padding:12px 16px;border-top:1px solid var(--border,#dadce0);display:flex;flex-direction:column;gap:8px}
+.mp-btn{font-family:inherit;font-size:13px;padding:8px 12px;border-radius:6px;border:1px solid var(--border,#dadce0);background:var(--surface,#fff);color:var(--text,#202124);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.mp-btn:hover{background:var(--bg,#f1f3f4)}
+.mp-btn.activo{border-color:var(--blue,#1a73e8);color:var(--blue,#1a73e8)}
+.mp-btn-pri{background:var(--blue,#1a73e8);border-color:var(--blue,#1a73e8);color:#fff}
+.mp-btn-pri:hover{background:var(--blue-dark,#1765cc)}
+.mp-btn:disabled{opacity:.45;cursor:default}
+.mp-check{font-size:12px;display:flex;align-items:center;gap:6px;color:var(--text-sec,#5f6368)}
+.mp-centro{background:#fff;border:3px solid #1a73e8;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.25)}
+.mp-fin span{display:flex;width:26px;height:26px;border-radius:50%;align-items:center;justify-content:center;color:#fff;font:600 11px Arial,sans-serif;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.mp-fin{background:none;border:none}
+#mapa-modal{border-radius:6px}.mp-btn,#mp-estado,.mp-fila input[type=text],#mp-fondo,#mp-encuadre{border-radius:4px!important}.mp-sub{line-height:1.4}
+@media (max-width:820px){#mapa-modal{flex-direction:column}#mp-panel{width:100%;height:50%;border-left:none;border-top:1px solid var(--border,#dadce0)}}
+</style>
+<style id="editor-estilos">
+/* ── Editor de flujogramas: barra agrupada, ayuda contextual y panel con pestañas ── */
+.edx{width:100%;height:100%;display:flex;flex-direction:column;background:var(--g-fondo,#f1f3f4);font-family:var(--font)}
+.edx-barra{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--g-sup,#fff);border-bottom:1px solid var(--g-borde,#dadce0);flex-wrap:wrap;flex-shrink:0}
+.edx-grupo{display:flex;align-items:center;gap:6px}
+.edx-herr{gap:2px;padding:3px;border:1px solid var(--g-borde,#dadce0);border-radius:10px;background:var(--g-sup-2,#f8f9fa)}
+.edx-der{margin-left:auto}
+.edx-div{width:1px;height:26px;background:var(--g-borde,#dadce0);margin:0 4px}
+.edx-btn{font-family:inherit;font-size:13px;height:34px;padding:0 12px;border-radius:8px;border:1px solid var(--g-borde,#dadce0);background:var(--g-sup,#fff);color:var(--g-texto-btn,#3c4043);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.edx-btn:hover{background:var(--g-hover,#f1f3f4)}
+.edx-btn-pri{background:var(--g-azul,#1a73e8);border-color:var(--g-azul,#1a73e8);color:var(--g-sobre-azul,#fff);font-weight:500}
+.edx-btn-pri:hover{background:var(--g-azul-osc,#1765cc)}
+.edx-ico{width:34px;padding:0;justify-content:center}
+.edx-peligro:hover{color:#d93025;border-color:#d93025;background:#fce8e6}
+.edx-check{font-size:12px;gap:6px}
+.edx-check input{margin:0;accent-color:var(--g-azul,#1a73e8)}
+.edx-caret{font-size:10px;opacity:.7}
+.edx-zoom{min-width:44px;text-align:center;font-size:12px;color:var(--g-texto-2,#5f6368);font-variant-numeric:tabular-nums}
+.edx-tool{width:auto!important;height:auto!important;min-width:58px;padding:5px 6px!important;border-radius:7px!important;flex-direction:column;gap:3px!important;border:1px solid transparent!important;background:transparent!important;color:var(--g-texto-btn,#3c4043)!important}
+.edx-tool i{font-size:15px}
+.edx-tool span{font-size:10.5px;line-height:1}
+.edx-tool:hover{background:var(--g-hover,#f1f3f4)!important}
+.edx-tool.active{background:var(--g-azul-claro,#e8f0fe)!important;color:var(--g-azul-texto,#1967d2)!important;border-color:var(--g-azul,#1a73e8)!important}
+.edx-menu-wrap{position:relative}
+.edx-menu{display:none;position:absolute;top:40px;left:0;z-index:50;min-width:270px;background:var(--g-sup,#fff);border:1px solid var(--g-borde,#dadce0);border-radius:10px;box-shadow:var(--g-sombra);padding:6px}
+.edx-menu.show{display:block}
+.edx-menu button{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:none;background:none;padding:9px 10px;border-radius:7px;cursor:pointer;color:var(--g-texto,#202124);font-family:inherit}
+.edx-menu button:hover{background:var(--g-hover,#f1f3f4)}
+.edx-menu i{width:18px;margin-top:2px;color:var(--g-texto-2,#5f6368)}
+.edx-menu b{display:block;font-size:13px;font-weight:500}
+.edx-menu span{display:block;font-size:11.5px;color:var(--g-texto-2,#5f6368);margin-top:2px}
+.edx-ayuda{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:12px;color:var(--g-texto-2,#5f6368);background:var(--g-sup-2,#f8f9fa);border-bottom:1px solid var(--g-borde,#dadce0);flex-shrink:0}
+.edx-ayuda i{color:var(--g-azul,#1a73e8)}
+.edx-cuerpo{flex:1;display:flex;overflow:hidden}
+.edx-lienzo{flex:1;position:relative;overflow:hidden;background:#fff}
+.edx-vacio{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none}
+.edx-vacio.show{display:flex}
+.edx-vacio-card{pointer-events:auto;background:#fff;border:1px solid #dadce0;border-radius:12px;box-shadow:0 1px 3px rgba(60,64,67,.2);padding:22px 24px;max-width:430px;color:#202124}
+.edx-vacio-tit{font-size:17px;font-weight:500;margin-bottom:14px}
+.edx-paso{display:flex;gap:12px;margin-bottom:12px;font-size:13px;color:#5f6368;line-height:1.4}
+.edx-paso b{display:block;color:#202124;font-weight:500}
+.edx-paso>span{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#e8f0fe;color:#1967d2;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px}
+.edx-vacio-btns{display:flex;gap:8px;margin-top:16px}
+.edx-panel{width:290px;flex-shrink:0;display:flex;flex-direction:column;background:var(--g-sup,#fff);border-left:1px solid var(--g-borde,#dadce0)}
+.edx-tabs{display:flex;border-bottom:1px solid var(--g-borde,#dadce0);flex-shrink:0}
+.edx-tab{flex:1;font-family:inherit;font-size:12px;padding:10px 4px;border:none;background:none;color:var(--g-texto-2,#5f6368);cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;justify-content:center;gap:5px}
+.edx-tab:hover{background:var(--g-hover,#f1f3f4)}
+.edx-tab.active{color:var(--g-azul-texto,#1967d2);border-bottom-color:var(--g-azul,#1a73e8);font-weight:500}
+.edx-cuenta{font-size:10.5px;background:var(--g-hover,#f1f3f4);border-radius:10px;padding:1px 6px}
+.edx-pan{display:none;flex:1;overflow-y:auto;padding:12px 14px;font-size:12px;color:var(--g-texto,#202124)}
+.edx-pan.active{display:block}
+.edx-sec{font-size:11px;font-weight:600;color:var(--g-texto-2,#5f6368);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.edx-pan>.edx-sec:first-child{margin-top:0}
+.edx-ayuda-mini{font-size:11.5px;color:var(--g-texto-2,#5f6368);margin-bottom:8px;line-height:1.4}
+.edx-vacio-mini{font-size:12px;color:var(--g-texto-2,#5f6368);padding:10px;text-align:center;background:var(--g-sup-2,#f8f9fa);border-radius:8px;line-height:1.4}
+.edx-fila{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:12px;color:var(--g-texto-2,#5f6368)}
+.edx-fila select{flex:1;max-width:170px;font-family:inherit;font-size:12px;padding:5px 6px;border:1px solid var(--g-borde,#dadce0);border-radius:6px;background:var(--g-campo,#fff);color:var(--g-texto,#202124)}
+.edx-fila input[type=color]{width:34px;height:24px;padding:0;border:1px solid var(--g-borde,#dadce0);border-radius:5px;background:none;cursor:pointer}
+
+.edx-sel-tit{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;margin-bottom:10px;color:var(--g-texto,#202124)}
+.edx-sel-tit i{color:var(--g-azul,#1a73e8)}
+.edx-sel-tit span{font-size:11px;font-weight:500;background:var(--g-hover,#f1f3f4);border-radius:10px;padding:2px 8px}
+.edx-prop{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:8px;margin:8px 0;font-size:12px;color:var(--g-texto-2,#5f6368)}
+.edx-prop input[type=range]{width:100%;accent-color:var(--g-azul,#1a73e8)}
+.edx-prop b{font-weight:500;min-width:26px;text-align:right;color:var(--g-texto,#202124);font-variant-numeric:tabular-nums}
+.edx-prop .edx-campo,.edx-prop .edx-colores,.edx-prop .edx-sw{grid-column:2 / 4}
+.edx-campo{font-family:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--g-borde,#dadce0);border-radius:6px;background:var(--g-campo,#fff);color:var(--g-texto,#202124);width:100%;box-sizing:border-box}
+.edx-colores{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.edx-colores button{width:20px;height:20px;border-radius:50%;border:2px solid var(--g-sup,#fff);box-shadow:0 0 0 1px var(--g-borde,#dadce0);cursor:pointer;padding:0}
+.edx-colores button.sel{box-shadow:0 0 0 2px var(--g-azul,#1a73e8)}
+.edx-colores input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--g-borde,#dadce0);border-radius:5px;background:none;cursor:pointer}
+.edx-sw{display:flex;align-items:center;gap:6px;color:var(--g-texto,#202124)}
+.edx-acciones{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:14px}
+.edx-acciones .edx-btn{height:32px;font-size:12px;justify-content:center;padding:0 8px}
+#ed-acc-list{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+#ed-acc-list .ed-acc-btn{margin:0;padding:6px 8px;border-radius:7px;border:1px solid var(--g-borde,#dadce0);font-size:12px;background:var(--g-sup,#fff)}
+#ed-acc-list .ed-acc-btn.active{border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor;background:var(--g-sup-2,#f8f9fa)}
+.edx-item{display:flex!important;align-items:center;gap:8px!important;padding:6px 8px!important;font-size:12px!important;color:var(--g-texto,#202124)!important;border-radius:7px!important}
+.edx-item i{width:16px;color:var(--g-texto-2,#5f6368);font-size:12px}
+.edx-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.edx-item-tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edx-item-tx b{font-weight:500}
+.edx-item.sel{background:var(--g-azul-claro,#e8f0fe)!important;border-color:var(--g-azul,#1a73e8)!important}
+
+/* ajustes de estilo sobrio (tipo programa de dibujo) */
+.edx-btn{border-radius:4px;height:32px;font-size:12.5px}
+.edx-ico{width:32px}
+.edx-herr{border:none;background:none;padding:0;gap:1px}
+.edx-tool{border-radius:4px!important;min-width:54px;padding:4px 5px!important}
+.edx-tool.active{background:var(--g-azul-claro,#e8f0fe)!important;border-color:transparent!important;box-shadow:inset 0 -2px 0 var(--g-azul,#1a73e8)}
+.edx-menu{border-radius:4px;padding:4px 0;min-width:190px;top:36px}
+.edx-menu button{border-radius:0;padding:8px 14px;align-items:center}
+.edx-menu i{margin-top:0}
+.edx-sec{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;color:var(--g-texto,#202124);margin:16px 0 6px}
+.edx-tab{font-size:12.5px;border-bottom-width:2px}
+.edx-cuenta{background:none;padding:0;color:var(--g-texto-2,#5f6368)}
+.edx-vacio-card{box-shadow:none;border-radius:4px;padding:16px 18px;text-align:center}
+.edx-vacio-tit{font-size:13px;color:#5f6368;font-weight:400;margin-bottom:10px}
+.edx-vacio-btns{margin-top:0;justify-content:center}
+.edx-vacio-mini{background:none;padding:6px 0;text-align:left}
+.edx-acciones .edx-btn,.edx-campo,.edx-fila select,.edx-fila input[type=color]{border-radius:4px}
+#ed-acc-list .ed-acc-btn{border-radius:4px}
+.edx-item{border-radius:3px!important}
+.edx-estado{display:flex;align-items:center;gap:16px;height:26px;padding:0 12px;font-size:11.5px;color:var(--g-texto-2,#5f6368);background:var(--g-sup-2,#f8f9fa);border-top:1px solid var(--g-borde,#dadce0);flex-shrink:0;white-space:nowrap;overflow:hidden}
+.edx-estado #ed-hint{overflow:hidden;text-overflow:ellipsis}
+.edx-estado-der{margin-left:auto;display:flex;gap:18px;font-variant-numeric:tabular-nums}
+.edx-sel-tit{font-size:13px}
+.edx-sel-tit span{border-radius:3px}
+@media (max-width:1100px){.edx-tool span{display:none}.edx-tool{min-width:36px}.edx-panel{width:250px}}
+</style>
 </head>
 <body>
 
@@ -1139,115 +1298,98 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 
 <!-- ═══ PAGE: EDITOR ═══ -->
 <div class="page" id="page-editor" style="padding:0;overflow:hidden;height:calc(100vh - 52px)">
-  <div id="editor-container" style="width:100%;height:100%;display:flex;flex-direction:column">
+  <div id="editor-container" class="edx">
 
-    <!-- Editor Topbar: horizontal tools -->
-    <div style="background:#F5F5F7;border-bottom:1px solid #D2D2D7;display:flex;align-items:center;padding:4px 10px;gap:4px;flex-shrink:0;flex-wrap:wrap">
-
-      <!-- Fondo -->
-      <div style="display:flex;align-items:center;gap:3px;padding-right:8px;border-right:1px solid #D2D2D7">
-        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="document.getElementById('ed-bg-input').click()" title="Subir imagen de fondo (ortomosaico, Google Maps, etc.)"><i class="fa-solid fa-image"></i> Fondo</button>
+    <!-- Barra superior: 1) fondo y generar  2) herramientas  3) edición y vista -->
+    <div class="edx-barra">
+      <div class="edx-grupo">
+        <div class="edx-menu-wrap">
+          <button class="edx-btn" onclick="edxMenu(event)" title="Imagen de fondo del flujograma"><i class="fa-solid fa-image"></i> Fondo <i class="fa-solid fa-caret-down edx-caret"></i></button>
+          <div class="edx-menu" id="edx-menu-fondo">
+            <button onclick="edxCerrarMenu();mpAbrir()"><i class="fa-solid fa-map-location-dot"></i><div><b>Desde mapa</b></div></button>
+            <button onclick="edxCerrarMenu();document.getElementById('ed-bg-input').click()"><i class="fa-solid fa-upload"></i><div><b>Subir imagen</b></div></button>
+            <button onclick="edxCerrarMenu();edClearBg()"><i class="fa-solid fa-xmark"></i><div><b>Quitar fondo</b></div></button>
+          </div>
+        </div>
         <input type="file" id="ed-bg-input" accept="image/*" style="display:none" onchange="edLoadBg(event)">
-        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="edClearBg()" title="Quitar imagen de fondo"><i class="fa-solid fa-xmark"></i></button>
+        <button class="edx-btn edx-btn-pri" onclick="edGenerarDesdeGeo()" title="Dibujar flechas, valores, totales y cruces peatonales automáticamente"><i class="fa-solid fa-arrows-split-up-and-left"></i> Generar</button>
       </div>
 
-      <!-- Herramientas de dibujo -->
-      <div style="display:flex;align-items:center;gap:2px;padding:0 8px;border-right:1px solid #D2D2D7">
-        <span style="font-size:10px;color:#6E6E73;margin-right:4px">Dibujo:</span>
-        <button class="ed-tool active" id="edt-select" onclick="edSetTool('select')" title="Seleccionar y mover (V)" style="width:auto;padding:4px 8px;font-size:11px;display:flex;align-items:center;gap:3px;height:30px">↖ <span style="font-size:10px">Selec.</span></button>
-        <button class="ed-tool" id="edt-line" onclick="edSetTool('line')" title="Línea simple — para dibujar calles (L)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">─ <span style="font-size:10px">Línea</span></button>
-        <button class="ed-tool" id="edt-arrow" onclick="edSetTool('arrow')" title="Flecha recta — movimiento directo (A)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">→ <span style="font-size:10px">Flecha</span></button>
-        <button class="ed-tool" id="edt-curve" onclick="edSetTool('curve')" title="Flecha curva — giro suave: 4 clics (inicio, fin, control1, control2) (C)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">↪ <span style="font-size:10px">Curva</span></button>
-        <button class="ed-tool" id="edt-pearrow" onclick="edSetTool('pearrow')" title="Flecha peatonal — línea guionada con punta (P)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">⇢ <span style="font-size:10px">Peatonal</span></button>
-        <button class="ed-tool" id="edt-curvenoa" onclick="edSetTool('curvenoa')" title="Curva sin flecha — igual que curva pero sin punta (W)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">↫ <span style="font-size:10px">Curva S/F</span></button>
+      <div class="edx-grupo edx-herr">
+        <button class="ed-tool edx-tool active" id="edt-select" onclick="edSetTool('select')" title="Seleccionar (V)"><i class="fa-solid fa-arrow-pointer"></i><span>Seleccionar</span></button><button class="ed-tool edx-tool" id="edt-arrow" onclick="edSetTool('arrow')" title="Flecha (A)"><i class="fa-solid fa-arrow-right-long"></i><span>Flecha</span></button><button class="ed-tool edx-tool" id="edt-curve" onclick="edSetTool('curve')" title="Curva (C)"><i class="fa-solid fa-arrow-turn-up"></i><span>Curva</span></button><button class="ed-tool edx-tool" id="edt-pearrow" onclick="edSetTool('pearrow')" title="Peatonal (P)"><i class="fa-solid fa-person-walking"></i><span>Peatonal</span></button><button class="ed-tool edx-tool" id="edt-line" onclick="edSetTool('line')" title="Línea (L)"><i class="fa-solid fa-minus"></i><span>Línea</span></button><button class="ed-tool edx-tool" id="edt-curvenoa" onclick="edSetTool('curvenoa')" title="Curva libre (W)"><i class="fa-solid fa-bezier-curve"></i><span>Curva libre</span></button>
+        <span class="edx-div"></span>
+        <button class="ed-tool edx-tool" id="edt-hpval" onclick="edSetTool('hpval')" title="Valor HP (H)"><i class="fa-solid fa-hashtag"></i><span>Valor HP</span></button><button class="ed-tool edx-tool" id="edt-text" onclick="edSetTool('text')" title="Texto (T)"><i class="fa-solid fa-font"></i><span>Texto</span></button><button class="ed-tool edx-tool" id="edt-north" onclick="edSetTool('north')" title="Norte (N)"><i class="fa-solid fa-compass"></i><span>Norte</span></button>
       </div>
 
-      <!-- Anotaciones -->
-      <div style="display:flex;align-items:center;gap:2px;padding:0 8px;border-right:1px solid #D2D2D7">
-        <span style="font-size:10px;color:#6E6E73;margin-right:4px">Anotar:</span>
-        <button class="ed-tool" id="edt-text" onclick="edSetTool('text')" title="Texto — nombre de calle, etiqueta (T)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px;font-weight:bold">T <span style="font-size:10px;font-weight:normal">Texto</span></button>
-        <button class="ed-tool" id="edt-north" onclick="edSetTool('north')" title="Símbolo norte (N)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">N <span style="font-size:10px">Norte</span></button>
-        <button class="ed-tool" id="edt-hpval" onclick="edSetTool('hpval')" title="Valor HP — selecciona movimiento en lista derecha, luego clic en canvas (H)" style="width:auto;padding:4px 8px;font-size:11px;height:30px;display:flex;align-items:center;gap:3px">HP <span style="font-size:10px">Flujo</span></button>
+      <div class="edx-grupo edx-der">
+        <button class="edx-btn edx-ico" onclick="edUndo()" title="Deshacer (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="edx-btn edx-ico edx-peligro" onclick="edDeleteSelected()" title="Eliminar lo seleccionado (Supr)"><i class="fa-solid fa-trash-can"></i></button>
+        <span class="edx-div"></span>
+        <button class="edx-btn edx-ico" onclick="edZoomOut()" title="Alejar (rueda del mouse)"><i class="fa-solid fa-minus"></i></button>
+        <div class="edx-zoom" id="edx-zoom-bar">100%</div>
+        <button class="edx-btn edx-ico" onclick="edZoomIn()" title="Acercar (rueda del mouse)"><i class="fa-solid fa-plus"></i></button>
+        <button class="edx-btn edx-ico" onclick="edAjustarVista()" title="Ajustar el dibujo a la pantalla"><i class="fa-solid fa-expand"></i></button>
+        <label class="edx-btn edx-check" title="Borde blanco fino alrededor de flechas y líneas: se distinguen mejor sobre el fondo y cuando se cruzan"><input type="checkbox" id="ed-halo" checked onchange="S.edHalo=this.checked;markDirty();edRender()"> Borde blanco</label>
       </div>
-
-      <!-- Edicion -->
-      <div style="display:flex;align-items:center;gap:2px;padding:0 8px;border-right:1px solid #D2D2D7">
-        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="edUndo()" title="Deshacer último cambio (Ctrl+Z)">↩ Deshacer</button>
-        <button class="btn" style="font-size:11px;padding:4px 8px;background:#FF453A;border-color:transparent;color:white" onclick="edDeleteSelected()" title="Eliminar elemento seleccionado (Del)"><i class="fa-solid fa-trash"></i> Eliminar</button>
-      </div>
-
-      <!-- Vista -->
-      <div style="display:flex;align-items:center;gap:2px;padding:0 8px">
-        <span style="font-size:10px;color:#6E6E73;margin-right:2px">Vista:</span>
-        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="edZoomIn()" title="Zoom acercar (+)">+</button>
-        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="edZoomOut()" title="Zoom alejar (-)">−</button>
-        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="edResetView()" title="Resetear vista al 100%">⊡ Reset</button>
-        <div id="ed-zoom" style="font-size:11px;color:#6E6E73;font-family:monospace;min-width:36px;text-align:right">100%</div>
-      </div>
-
-      <!-- Hint -->
-      <div id="ed-hint" style="margin-left:auto;font-size:11px;color:#6E6E73;max-width:280px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Alt+drag mover vista · Scroll zoom · Del eliminar</div>
     </div>
 
-    <!-- Editor Body -->
-    <div style="flex:1;display:flex;overflow:hidden">
 
-
-
-      <!-- Canvas -->
-      <div style="flex:1;position:relative;overflow:hidden;background:#F5F5F7" id="ed-canvas-area">
+    <div class="edx-cuerpo">
+      <!-- Lienzo -->
+      <div id="ed-canvas-area" class="edx-lienzo">
         <canvas id="ed-canvas"></canvas>
-        <div id="ed-hint" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:white;font-size:11px;padding:4px 12px;border-radius:16px;pointer-events:none;backdrop-filter:blur(8px)">Selecciona herramienta · Alt+drag para mover vista · Scroll para zoom</div>
-        <div id="ed-zoom" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.5);color:#8E8E93;font-size:11px;padding:3px 8px;border-radius:5px;font-family:monospace">100%</div>
-      </div>
-
-      <!-- Right panel: columna props/HP + columna elementos -->
-      <div style="display:flex;flex-shrink:0;border-left:1px solid #D2D2D7;font-size:12px">
-
-        <!-- Columna izquierda: Color / Propiedades / HP -->
-        <div style="width:210px;background:#F5F5F7;border-right:1px solid #E5E5EA;overflow-y:auto;display:flex;flex-direction:column">
-
-          <div style="padding:10px;border-bottom:1px solid #E5E5EA">
-            <div style="font-size:10px;font-weight:600;color:#6E6E73;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Color / Acceso</div>
-            <div id="ed-acc-list"></div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
-              <span style="color:#6E6E73;font-size:11px">Color libre</span>
-              <input type="color" id="ed-free-color" value="#FFFFFF" style="width:28px;height:22px;padding:0;border:none;background:none;cursor:pointer" oninput="edSelectFreeColor(this.value)">
+        <div id="edx-vacio" class="edx-vacio">
+          <div class="edx-vacio-card">
+            <div class="edx-vacio-tit">Sin fondo</div>
+            <div class="edx-vacio-btns">
+              <button class="edx-btn edx-btn-pri" onclick="mpAbrir()"><i class="fa-solid fa-map-location-dot"></i> Fondo desde mapa</button>
+              <button class="edx-btn" onclick="document.getElementById('ed-bg-input').click()"><i class="fa-solid fa-upload"></i> Subir imagen</button>
             </div>
           </div>
-
-          <div style="padding:10px;border-bottom:1px solid #E5E5EA">
-            <div style="font-size:10px;font-weight:600;color:#6E6E73;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Propiedades</div>
-            <div id="ed-props"><div style="font-size:11px;color:#636366;text-align:center;padding:8px 0">Selecciona un elemento</div></div>
-          </div>
-
-          <div style="padding:10px;flex:1;overflow-y:auto">
-            <div style="font-size:10px;font-weight:600;color:#6E6E73;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Movimientos HP</div>
-            <div style="margin-bottom:6px">
-              <select id="ed-turno-sel" style="width:100%;font-size:11px;padding:4px;background:#FFFFFF;border:1px solid #D2D2D7;border-radius:5px;color:#1D1D1F" onchange="edRenderHPMovs();edRefreshHPVals()">
-                <option value="0">Madrugada</option><option value="1" selected>Mañana</option>
-                <option value="2">Tarde</option><option value="3">Noche</option>
-              </select>
-            </div>
-            <div style="font-size:10px;font-weight:600;color:#6E6E73;text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px">Por movimiento</div>
-            <div id="ed-hp-movs" style="font-size:11px;color:#636366">Configura HP primero</div>
-            <div style="font-size:10px;font-weight:600;color:#6E6E73;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 4px">Por acceso</div>
-            <div id="ed-hp-acc"></div>
-            <div style="font-size:10px;font-weight:600;color:#6E6E73;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 4px">Peatonal</div>
-            <div id="ed-hp-peat"></div>
-          </div>
-
         </div>
-
-        <!-- Columna derecha: lista de elementos siempre visible -->
-        <div style="width:155px;background:#FAFAFA;overflow-y:auto;display:flex;flex-direction:column">
-          <div style="padding:8px 10px;border-bottom:1px solid #E5E5EA;position:sticky;top:0;background:#FAFAFA;z-index:1;flex-shrink:0">
-            <div style="font-size:10px;font-weight:600;color:#636366;text-transform:uppercase;letter-spacing:.06em">Elementos&nbsp;(<span id="ed-elem-count">0</span>)</div>
-          </div>
-          <div id="ed-elem-list" style="padding:6px;flex:1"></div>
-        </div>
-
       </div>
+
+      <!-- Panel lateral con pestañas -->
+      <div class="edx-panel">
+        <div class="edx-tabs">
+          <button class="edx-tab active" data-tab="props" onclick="edxTab('props')"><i class="fa-solid fa-sliders"></i> Propiedades</button>
+          <button class="edx-tab" data-tab="hp" onclick="edxTab('hp')"><i class="fa-solid fa-hashtag"></i> Valores</button>
+          <button class="edx-tab" data-tab="elem" onclick="edxTab('elem')"><i class="fa-solid fa-layer-group"></i> Elementos <span class="edx-cuenta" id="ed-elem-count">0</span></button>
+        </div>
+
+        <div class="edx-pan active" data-pan="props">
+          <div class="edx-sec">Color de dibujo</div>
+          <div id="ed-acc-list"></div>
+          <label class="edx-fila"><span>Otro color</span><input type="color" id="ed-free-color" value="#FFFFFF" oninput="edSelectFreeColor(this.value)"></label>
+          <div class="edx-sec">Selección</div>
+          <div id="ed-props"><div class="edx-vacio-mini">Nada seleccionado</div></div>
+        </div>
+
+        <div class="edx-pan" data-pan="hp">
+          <label class="edx-fila"><span>Turno</span>
+            <select id="ed-turno-sel" onchange="edRenderHPMovs();edRefreshHPVals()">
+              <option value="0">Madrugada</option><option value="1" selected>Mañana</option>
+              <option value="2">Tarde</option><option value="3">Noche</option>
+            </select>
+          </label>
+          <div class="edx-sec">Por movimiento</div>
+          <div id="ed-hp-movs" class="edx-vacio-mini">Sin hora punta calculada</div>
+          <div class="edx-sec">Entrada</div>
+          <div id="ed-hp-acc"></div>
+          <div class="edx-sec">Salida</div>
+          <div id="ed-hp-sal"></div>
+          <div class="edx-sec">Peatonal</div>
+          <div id="ed-hp-peat"></div>
+        </div>
+
+        <div class="edx-pan" data-pan="elem">
+          <div id="ed-elem-list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="edx-estado">
+      <span id="ed-hint"></span>
+      <span class="edx-estado-der"><span id="edx-coord">x —  y —</span><span id="ed-zoom">100%</span></span>
     </div>
   </div>
 </div>
@@ -1370,38 +1512,9 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
         <div class="card-title"><i class="fa-solid fa-map"></i> Editor de Flujograma</div>
       </div>
       <div style="font-size:12px;color:var(--text);line-height:1.7">
-        El editor permite ubicar visualmente los <strong>movimientos vehiculares y peatonales</strong> sobre la imagen real de la intersección (vista satelital o plano). Cada movimiento configurado en HP se vincula a su valor calculado (flujo y/o UCP), mostrándose directamente sobre el diagrama como referencia visual para el informe técnico y la presentación de resultados.
-      </div>
-    </div>
-
-    <!-- Referencias -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><i class="fa-solid fa-book-open"></i> Referencias metodológicas</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border-lt);display:flex;align-items:flex-start;gap:12px">
-          <div style="font-size:20px;flex-shrink:0"><i class="fa-solid fa-book"></i></div>
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text)">HCM — Highway Capacity Manual, 6th Edition</div>
-            <div style="font-size:12px;color:var(--text-sec);margin:3px 0">Transportation Research Board (TRB), National Academies of Sciences. Base para el cálculo de capacidad vial, nivel de servicio y factores de hora punta en intersecciones.</div>
-            <a href="https://www.trb.org/Main/Blurbs/176725.aspx" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none"><i class="fa-solid fa-link"></i> trb.org — HCM 6th Edition</a>
-          </div>
-        </div>
-        <div style="padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border-lt);display:flex;align-items:flex-start;gap:12px">
-          <div style="font-size:20px;flex-shrink:0"><i class="fa-solid fa-book"></i></div>
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text)">MTC DG-2018 — Manual de Diseño Geométrico de Carreteras</div>
-            <div style="font-size:12px;color:var(--text-sec);margin:3px 0">Ministerio de Transportes y Comunicaciones del Perú. Referencia normativa nacional para criterios de diseño geométrico e intersecciones.</div>
-          </div>
-        </div>
-        <div style="padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border-lt);display:flex;align-items:flex-start;gap:12px">
-          <div style="font-size:20px;flex-shrink:0"><i class="fa-solid fa-book"></i></div>
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text)">Synchro / SimTraffic — Manual de usuario (Trafficware)</div>
-            <div style="font-size:12px;color:var(--text-sec);margin:3px 0">Software de modelación y optimización semafórica. Los valores UCP por movimiento calculados en AforoCore se ingresan directamente como volúmenes vehiculares para la optimización de ciclos y tiempos de fase.</div>
-          </div>
-        </div>
+        El editor ubica los <strong>movimientos vehiculares y peatonales</strong> sobre la intersección. El fondo puede venir de un mapa (esquema vial a partir de OpenStreetMap, con el norte arriba y a escala) o de una imagen propia, como un ortomosaico de dron.
+        Con el fondo desde mapa, el flujograma se genera a partir de los movimientos de la hora punta: flechas, valores por movimiento, totales de entrada y salida por acceso y cruces peatonales. Luego se ajusta a mano.
+        <div style="margin-top:8px"><strong>Código de movimiento:</strong> el último dígito indica el giro: 0 vuelta en U, 1 izquierda, 2 directo, 3 derecha (por ejemplo, 11 es la izquierda desde el acceso Norte).</div>
       </div>
     </div>
 
@@ -1415,6 +1528,14 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
   <div id="session-modal">
     <div class="sm-title">Aforo<span style="color:var(--text)">Core</span></div>
     <div class="sm-sub">¿Cómo quieres comenzar?</div>
+
+    <button class="sm-btn" id="wm-continuar" style="display:none" onclick="wmContinuar()">
+      <div class="sm-btn-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div>
+        <div class="sm-btn-title">Continuar aforo anterior</div>
+        <div class="sm-btn-desc" id="wm-continuar-desc">Recuperar lo último guardado en este navegador</div>
+      </div>
+    </button>
 
     <button class="sm-btn" onclick="wmNuevo()">
       <div class="sm-btn-icon"><i class="fa-solid fa-clipboard-list"></i></div>
@@ -1439,6 +1560,59 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 </div>
 
 <div id="notif"></div>
+
+<div id="mapa-overlay">
+  <div id="mapa-modal">
+    <div id="mp-mapa"></div>
+    <div id="mp-panel">
+      <div class="mp-cab">
+        <div class="mp-titulo">Fondo desde mapa</div>
+        <div class="mp-sub">Ubicación, brazos y fondo del cruce</div>
+      </div>
+      <div class="mp-cuerpo">
+        <div>
+          <div class="mp-seccion-tit">Ubicación</div>
+          <div class="mp-fila">
+            <input type="text" id="mp-buscar" placeholder="Ciudad, lugar o “-9.93, -76.24”" onkeydown="if(event.key==='Enter')mpBuscar()">
+            <button class="mp-btn" onclick="mpBuscar()" title="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
+          </div>
+        </div>
+        <div id="mp-estado">Busca la ciudad o la intersección y haz clic justo en el cruce.</div>
+        <div>
+          <div class="mp-seccion-tit">Brazos de la intersección</div>
+          <div id="mp-lista"><div class="mp-vacio">Sin brazos todavía.</div></div>
+          <div class="mp-fila" style="margin-top:8px">
+            <button class="mp-btn" id="mp-btn-agregar" onclick="mpAgregarBrazo()"><i class="fa-solid fa-plus"></i> Agregar brazo</button>
+            <button class="mp-btn" onclick="mpZona=null;mpDetectar()" title="Volver a leer las vías de OSM"><i class="fa-solid fa-rotate"></i> Detectar de nuevo</button>
+          </div>
+          <div class="mp-sub" style="margin-top:6px">Arrastra la punta de un brazo para corregir su dirección. El número es el ancho de calzada en metros.</div>
+        </div>
+        <div>
+          <div class="mp-seccion-tit">Fondo</div>
+          <div class="mp-fila"><select id="mp-fondo" onchange="mpCambiarFondo()">
+            <option value="esquema">Esquema vial (recomendado)</option>
+            <option value="osm">Mapa OpenStreetMap</option>
+          </select></div>
+          <div class="mp-fila" style="margin-top:8px"><select id="mp-encuadre" style="flex:1;font-size:13px;padding:7px 9px;border:1px solid var(--border,#dadce0);border-radius:6px;background:var(--surface,#fff);color:var(--text,#202124)">
+            <option value="22.15">Muy cercano (≈60 m)</option>
+            <option value="21.5">Detalle (≈90 m)</option>
+            <option value="21">Cercano (≈130 m)</option>
+            <option value="20">Medio (≈260 m)</option>
+            <option value="19">Amplio (≈520 m)</option>
+          </select></div>
+          <div class="mp-sub" style="margin-top:6px">La imagen sale centrada en el cruce, con el norte hacia arriba, sin importar cómo esté el mapa en pantalla.</div>
+        </div>
+      </div>
+      <div class="mp-pie">
+        <button class="mp-btn mp-btn-pri" id="mp-btn-generar" onclick="mpUsarFondo(true)" disabled><i class="fa-solid fa-arrows-split-up-and-left"></i> Usar fondo y generar flujograma</button>
+        <div class="mp-fila">
+          <button class="mp-btn" id="mp-btn-fondo" style="flex:1" onclick="mpUsarFondo(false)" disabled>Solo usar el fondo</button>
+          <button class="mp-btn" style="flex:1" onclick="mpCerrar()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -1507,6 +1681,16 @@ let S = {
   hp:{},
   flujo:{img:null,pins:{},mapeo:{}},
 };
+// Copia del estado inicial: sirve para completar sesiones a las que les falte alguna parte
+// (por ejemplo, un JSON con datos pero sin hora punta calculada). Antes eso impedía cargarlas.
+const S_INICIAL=JSON.parse(JSON.stringify(S));
+function completarEstado(d){
+  if(!d||typeof d!=='object'||!Array.isArray(d.accesos)) throw new Error('no tiene la estructura de un aforo');
+  Object.keys(S_INICIAL).forEach(k=>{ if(d[k]==null) d[k]=JSON.parse(JSON.stringify(S_INICIAL[k])); });
+  d.gen=Object.assign({},S_INICIAL.gen,d.gen);
+  d.flujo=Object.assign({},S_INICIAL.flujo,d.flujo);
+  return d;
+}
 
 let isDirty=false;
 let autoSaveTimer=null;
@@ -1529,16 +1713,76 @@ function autoSetDia(){
 
 function autoSave(){
   readFormToState();
-  localStorage.setItem('afrovial_v1',JSON.stringify(S));
-  isDirty=false;
-  document.getElementById('save-dot').className='save-dot';
-  document.getElementById('save-label').textContent='Guardado';
+  guardarYMarcar();
+}
+
+// ── Guardado seguro en localStorage ──
+// localStorage tiene ~5 MB. Si se llena, setItem lanza QuotaExceededError; antes eso
+// fallaba en silencio y el trabajo dejaba de guardarse sin aviso.
+function lsGuardar(clave,valor){
+  try{ localStorage.setItem(clave,valor); return true; }
+  catch(e){ console.error('No se pudo guardar '+clave+':',e); return false; }
+}
+let _ultimoAvisoLS=0;
+function avisoAlmacenamiento(msg){
+  const t=Date.now();
+  if(t-_ultimoAvisoLS<20000) return;   // no repetir el aviso en cada autoguardado
+  _ultimoAvisoLS=t;
+  notify(msg,7000);
+}
+// El editor se guarda aparte (afrovial_editor_draw), así que editorState no va en
+// afrovial_v1: antes la imagen de fondo quedaba guardada dos veces.
+function estadoParaGuardar(sinImagenFlujo){
+  const copia=Object.assign({},S);
+  delete copia.editorState;
+  copia.guardadoEn=new Date().toISOString();
+  if(sinImagenFlujo && copia.flujo) copia.flujo=Object.assign({},copia.flujo,{img:null});
+  return JSON.stringify(copia);
+}
+function guardarYMarcar(){
+  const dot=document.getElementById('save-dot'), lbl=document.getElementById('save-label');
+  let ok=lsGuardar('afrovial_v1',estadoParaGuardar(false));
+  if(!ok && S.flujo && S.flujo.img){
+    // Plan B: guardar los conteos aunque no entre la imagen del flujograma
+    ok=lsGuardar('afrovial_v1',estadoParaGuardar(true));
+    if(ok) avisoAlmacenamiento('<i class="fa-solid fa-triangle-exclamation"></i> Memoria del navegador llena: se guardaron los datos, pero no la imagen del flujograma. Exporta el JSON para conservarla.');
+  }
+  if(ok){
+    isDirty=false;
+    dot.className='save-dot';
+    lbl.textContent='Guardado';
+  } else {
+    isDirty=true;
+    dot.className='save-dot unsaved';
+    lbl.textContent='No se guarda: exporta JSON';
+    avisoAlmacenamiento('<i class="fa-solid fa-triangle-exclamation"></i> Memoria del navegador llena: este aforo no se está guardando. Exporta el JSON ahora.');
+  }
+  return ok;
+}
+// Copia el editor que viene en un JSON importado a edState y lo guarda aparte.
+// Si el JSON no trae editor, se limpia: antes quedaba el dibujo de la intersección anterior.
+function restaurarEditorDesdeS(){
+  const es=S.editorState;
+  edState.elements=(es&&es.elements)||[];
+  edState.nextId=(es&&es.nextId)||1000;
+  edState.bgImage=(es&&es.bgImage)||null;
+  edBgImg=new Image();
+  if(edState.bgImage){
+    edBgImg.onload=()=>{ if(edInited) edRender(); };
+    edBgImg.src=edState.bgImage;
+  }
+  delete S.editorState;   // ya vive en edState; no se duplica en memoria ni en el autoguardado
+  edSaveStorage();
+  if(edInited){ edUpdateElemList(); edUpdateProps(); edRender(); }
 }
 function loadSession(){
   try{
     const raw=localStorage.getItem('afrovial_v1');
     if(raw){
-      S=JSON.parse(raw);
+      S=completarEstado(JSON.parse(raw));
+      delete S.guardadoEn;
+      delete S.editorState;   // autoguardados antiguos lo traían duplicado
+      if(S.flujo&&S.flujo.img) flujoImg=S.flujo.img;
       // Ensure all vehiculos have tipo field
       S.vehiculos.forEach(v=>{ if(!v.tipo) v.tipo='Privado'; });
       applyStateToForm();
@@ -3816,54 +4060,35 @@ function drawGrafica6(vsPeatData){
 function exportJSON(){
   clearTimeout(autoSaveTimer);
   readFormToState();
-  // Incluir estado del editor vectorial en el JSON
-  S.editorState={elements:edState.elements,bgImage:edState.bgImage,nextId:edState.nextId};
-  localStorage.setItem('afrovial_v1',JSON.stringify(S));
-  isDirty=false;
-  document.getElementById('save-dot').className='save-dot';
-  document.getElementById('save-label').textContent='Guardado';
+  guardarYMarcar();
+  // El estado del editor vectorial va en el archivo exportado (en el navegador se guarda aparte)
+  const exp=Object.assign({},S,{editorState:{elements:edState.elements,bgImage:edState.bgImage,nextId:edState.nextId}});
 
-  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(exp,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   const fname=`aforo_${(S.gen.inter||'proyecto').replace(/[^a-z0-9]/gi,'_')}_${S.gen.fecha||'sin-fecha'}.json`;
   a.href=URL.createObjectURL(blob);a.download=fname;a.click();
-  notify('<i class="fa-solid fa-check"></i> JSON descargado — tus datos siguen activos en pantalla');
+  notify('<i class="fa-solid fa-check"></i> JSON descargado');
 }
 function importJSON(e){
   const file=e.target.files[0];if(!file) return;
   const r=new FileReader();
   r.onload=ev=>{
     try{
-      S=JSON.parse(ev.target.result);
+      S=completarEstado(JSON.parse(ev.target.result));
+      delete S.guardadoEn;
+      S.vehiculos&&S.vehiculos.forEach(v=>{ if(!v.tipo) v.tipo='Privado'; });
       if(S.flujo?.img) flujoImg=S.flujo.img;
       applyStateToForm();
       renderAccesos();renderVehiculos();renderLados();
       populateAccesoSel();
       if(S.hpGlobal&&Object.keys(S.hp||{}).length) renderResultados();
       updateProjectStatus();
-      // Restaurar estado del editor vectorial si existe en el JSON
-      if(S.editorState){
-        edState.elements=S.editorState.elements||[];
-        edState.nextId=S.editorState.nextId||1000;
-        if(S.editorState.bgImage){
-          edState.bgImage=S.editorState.bgImage;
-          edBgImg=new Image();
-          edBgImg.onload=()=>{ if(edInited) edRender(); };
-          edBgImg.src=edState.bgImage;
-        } else {
-          edState.bgImage=null;
-          edBgImg=new Image();
-        }
-        // Sync to localStorage del editor
-        localStorage.setItem('afrovial_editor_draw',JSON.stringify({elements:edState.elements,bgImage:edState.bgImage,nextId:edState.nextId}));
-        if(edInited){ edUpdateElemList(); edUpdateProps(); edRender(); }
-      }
-      localStorage.setItem('afrovial_v1',JSON.stringify(S));
-      isDirty=false;
-      document.getElementById('save-dot').className='save-dot';
-      document.getElementById('save-label').textContent='Guardado';
-      notify('Sesión cargada correctamente <i class="fa-solid fa-check"></i>');
-    }catch(err){notify('Error al leer el archivo JSON');}
+      // Restaurar estado del editor vectorial (o limpiarlo si el JSON no trae)
+      restaurarEditorDesdeS();
+      guardarYMarcar();
+      notify('Sesión cargada <i class="fa-solid fa-check"></i>');
+    }catch(err){console.error(err);notify('No se pudo cargar el JSON: '+(err&&err.message||'formato no reconocido'));}
   };
   r.readAsText(file);
 }
@@ -3917,7 +4142,7 @@ function showPage(p){
   if(p==='peatonal') renderPeatTable();
   if(p==='resultados' && S.hpGlobal && Object.keys(S.hp||{}).length) renderResultados();
   if(p==='graficas') renderGraficas();
-  if(p==='editor') edInit();
+  if(p==='editor'){ edInit(); setTimeout(()=>edResize(),0); }
   if(p==='export') updateProjectStatus();
 }
 
@@ -3925,12 +4150,12 @@ function showPage(p){
 //  NOTIF
 // ══════════════════════════════════════════════════════════════
 let notifTimer=null;
-function notify(msg){
+function notify(msg,ms){
   const el=document.getElementById('notif');
   el.innerHTML=msg;
   el.classList.add('show');
   clearTimeout(notifTimer);
-  notifTimer=setTimeout(()=>el.classList.remove('show'),2800);
+  notifTimer=setTimeout(()=>el.classList.remove('show'),ms||2800);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3942,12 +4167,38 @@ renderAccesos(); renderVehiculos(); renderLados(); populateAccesoSel();
 for(let i=0;i<4;i++) updateTurnoUI(i);
 updateProjectStatus();
 
+// Si hay un autoguardado, ofrecer continuarlo (antes se guardaba pero no había cómo recuperarlo)
+(function mostrarContinuar(){
+  try{
+    const raw=localStorage.getItem('afrovial_v1'); if(!raw) return;
+    const d=JSON.parse(raw);
+    const btn=document.getElementById('wm-continuar'); if(!btn) return;
+    let txt=(d.gen&&d.gen.inter)||'Aforo sin nombre';
+    if(d.guardadoEn){
+      const f=new Date(d.guardadoEn);
+      txt+=', guardado el '+f.toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
+    document.getElementById('wm-continuar-desc').textContent=txt;
+    btn.style.display='';
+  }catch(e){ console.error('Autoguardado ilegible:',e); }
+})();
+
+// Solo avisa al cerrar si algo quedó sin guardar (por ejemplo, memoria llena)
+window.addEventListener('beforeunload',e=>{ if(isDirty){ e.preventDefault(); e.returnValue=''; } });
+
+function wmContinuar(){
+  loadSession();
+  wmCerrar();
+}
+
 function wmCerrar(){
   const sm=document.getElementById('session-overlay');
   if(sm){ sm.style.opacity='0'; setTimeout(()=>sm.classList.remove('show'),220); }
 }
 
 function wmNuevo(){
+  if(localStorage.getItem('afrovial_v1') &&
+     !confirm('Hay un aforo guardado en este navegador. Empezar uno nuevo lo borra (si ya lo exportaste a JSON, no pasa nada). ¿Empezar uno nuevo?')) return;
   localStorage.removeItem('afrovial_v1');
   localStorage.removeItem('afrovial_editor_draw');
   wmCerrar();
@@ -3960,34 +4211,23 @@ function wmCargar(e){
   const r=new FileReader();
   r.onload=ev=>{
     try{
-      S=JSON.parse(ev.target.result);
+      S=completarEstado(JSON.parse(ev.target.result));
+      delete S.guardadoEn;
       S.vehiculos.forEach(v=>{ if(!v.tipo) v.tipo='Privado'; });
+      if(S.flujo&&S.flujo.img) flujoImg=S.flujo.img;
       applyStateToForm();
       renderAccesos(); renderVehiculos(); renderLados();
       populateAccesoSel();
       if(S.hpGlobal&&Object.keys(S.hp||{}).length) renderResultados();
       updateProjectStatus();
-      // Restaurar editor vectorial si existe en el JSON
-      if(S.editorState){
-        edState.elements=S.editorState.elements||[];
-        edState.nextId=S.editorState.nextId||1000;
-        if(S.editorState.bgImage){
-          edState.bgImage=S.editorState.bgImage;
-          edBgImg=new Image();
-          edBgImg.onload=()=>{ if(edInited) edRender(); };
-          edBgImg.src=edState.bgImage;
-        } else { edState.bgImage=null; edBgImg=new Image(); }
-        localStorage.setItem('afrovial_editor_draw',JSON.stringify({elements:edState.elements,bgImage:edState.bgImage,nextId:edState.nextId}));
-        if(edInited){ edUpdateElemList(); edUpdateProps(); edRender(); }
-      }
-      localStorage.setItem('afrovial_v1',JSON.stringify(S));
-      isDirty=false;
-      document.getElementById('save-dot').className='save-dot';
-      document.getElementById('save-label').textContent='Guardado';
+      // Restaurar editor vectorial (o limpiarlo si el JSON no trae)
+      restaurarEditorDesdeS();
+      guardarYMarcar();
       wmCerrar();
-      notify('Sesión cargada correctamente <i class="fa-solid fa-check"></i>');
+      notify('Sesión cargada <i class="fa-solid fa-check"></i>');
     }catch(ex){
-      if(err){ err.textContent='Error al leer el archivo. ¿Es un JSON de AforoCore?'; err.style.display='block'; }
+      console.error(ex);
+      if(err){ err.textContent='No se pudo cargar el archivo ('+(ex&&ex.message||'formato no reconocido')+'). ¿Es un JSON de AforoCore?'; err.style.display='block'; }
     }
   };
   r.readAsText(file);
@@ -4028,9 +4268,12 @@ function edInit(){
   document.addEventListener('keydown',edOnKey);
   edBgImg.onload=()=>edRender();
   edLoadStorage();
+  edUpdateElemList(); edUpdateProps();   // antes quedaba en 0 si la sesión se cargó antes de abrir el editor
   edRenderAccList();
   edRenderHPMovs();
-  edRender();
+  edSetTool(edTool||'select');
+  edCanvas.addEventListener('mousemove',e=>{ const c=document.getElementById('edx-coord'); if(c) c.textContent='x '+Math.round((e.offsetX-edViewX)/edScale)+'   y '+Math.round((e.offsetY-edViewY)/edScale); });
+  if(edBgImg.complete&&edBgImg.naturalWidth) edAjustarVista(); else edRender();
 }
 
 function edResize(){
@@ -4243,7 +4486,8 @@ function edOnKey(e){
   if(!active) return;
   if((e.key==='Delete'||e.key==='Backspace')&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA') edDeleteSelected();
   if((e.ctrlKey||e.metaKey)&&e.key==='z') edUndo();
-  if(!e.ctrlKey&&!e.metaKey){
+  const escribiendo=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if(!e.ctrlKey&&!e.metaKey&&!escribiendo){
     if(e.key==='v') edSetTool('select');
     if(e.key==='l') edSetTool('line');
     if(e.key==='p') edSetTool('pearrow');
@@ -4331,6 +4575,7 @@ function edUndo(){if(!edHistory.length) return;edState.elements=JSON.parse(edHis
 
 // ── RENDER ──
 function edRender(){
+  const cbH=document.getElementById('ed-halo'); if(cbH) cbH.checked=S.edHalo!==false;
   if(!edCtx||!edCanvas) return;
   edCtx.clearRect(0,0,edCanvas.width,edCanvas.height);
   edCtx.fillStyle='#FFFFFF';edCtx.fillRect(0,0,edCanvas.width,edCanvas.height);
@@ -4361,78 +4606,92 @@ function edDrawEl(el,sel){
   if(sel) edDrawHandles(el);
 }
 
-function edDrawLine(x1,y1,x2,y2,color,lw,sel){
-  edCtx.strokeStyle=color;edCtx.lineWidth=lw;edCtx.lineCap='round';
-  edCtx.beginPath();edCtx.moveTo(x1,y1);edCtx.lineTo(x2,y2);edCtx.stroke();
-  if(sel){
-    edCtx.fillStyle='#0A84FF';edCtx.strokeStyle='white';edCtx.lineWidth=1.5;
-    [[x1,y1],[x2,y2]].forEach(([x,y])=>{edCtx.beginPath();edCtx.arc(x,y,5,0,2*Math.PI);edCtx.fill();edCtx.stroke();});
+// ── Estilo de flechas ──
+// La punta crece con el grosor, la línea termina en la base de la punta (no asoma por ella)
+// y, si está activo, un borde blanco fino separa las flechas del fondo y entre sí.
+const edHalo=()=>S.edHalo!==false;
+function edPunta(lw,as){ const L=Math.max(as||12,lw*3.2); return {L,W:L*0.55}; }
+function edTrazo(camino,color,lw,dash){
+  edCtx.save(); edCtx.lineCap='round'; edCtx.lineJoin='round';
+  if(edHalo()){
+    edCtx.strokeStyle='rgba(255,255,255,0.92)'; edCtx.lineWidth=lw+Math.max(2.5,lw*0.7);
+    if(dash) edCtx.setLineDash(dash);
+    edCtx.beginPath(); camino(); edCtx.stroke();
   }
+  edCtx.strokeStyle=color; edCtx.lineWidth=lw; edCtx.setLineDash(dash||[]);
+  edCtx.beginPath(); camino(); edCtx.stroke();
+  edCtx.restore();
+}
+function edDibujarPunta(tx,ty,ang,color,lw,as){
+  const {L,W}=edPunta(lw,as), c=Math.cos(ang), s=Math.sin(ang);
+  const bx=tx-c*L, by=ty-s*L;
+  edCtx.save(); edCtx.lineJoin='round';
+  edCtx.beginPath(); edCtx.moveTo(tx,ty); edCtx.lineTo(bx-s*W,by+c*W); edCtx.lineTo(bx+s*W,by-c*W); edCtx.closePath();
+  if(edHalo()){ edCtx.strokeStyle='rgba(255,255,255,0.92)'; edCtx.lineWidth=Math.max(2.5,lw*0.7); edCtx.stroke(); }
+  edCtx.fillStyle=color; edCtx.fill();
+  edCtx.restore();
+}
+function edPuntosSel(pts,color){
+  edCtx.save(); edCtx.fillStyle=color||'#0A84FF'; edCtx.strokeStyle='white'; edCtx.lineWidth=1.5;
+  pts.forEach(([x,y])=>{ edCtx.beginPath(); edCtx.arc(x,y,5,0,2*Math.PI); edCtx.fill(); edCtx.stroke(); });
+  edCtx.restore();
+}
+function edManijasCurva(el){
+  edCtx.save();
+  edCtx.strokeStyle='rgba(10,132,255,0.6)'; edCtx.lineWidth=1; edCtx.setLineDash([3,3]);
+  edCtx.beginPath(); edCtx.moveTo(el.x1,el.y1); edCtx.lineTo(el.cx1,el.cy1); edCtx.stroke();
+  edCtx.beginPath(); edCtx.moveTo(el.x2,el.y2); edCtx.lineTo(el.cx2,el.cy2); edCtx.stroke();
+  edCtx.setLineDash([]);
+  [[el.cx1,el.cy1,'#FF9F0A'],[el.cx2,el.cy2,'#30D158']].forEach(([x,y,c])=>{
+    edCtx.beginPath(); edCtx.arc(x,y,5,0,2*Math.PI); edCtx.fillStyle=c; edCtx.fill();
+    edCtx.strokeStyle='white'; edCtx.lineWidth=1; edCtx.stroke();
+  });
+  edCtx.restore();
+}
+// Tramo [0,t] de la curva Bézier (de Casteljau): para cortar la curva en la base de la punta
+function edBezCortar(el,t){
+  const lp=(a,b)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+  const p0={x:el.x1,y:el.y1}, p1={x:el.cx1,y:el.cy1}, p2={x:el.cx2,y:el.cy2}, p3={x:el.x2,y:el.y2};
+  const a=lp(p0,p1), b=lp(p1,p2), c=lp(p2,p3), d=lp(a,b), e=lp(b,c);
+  return [p0,a,d,lp(d,e)];
+}
+
+function edDrawLine(x1,y1,x2,y2,color,lw,sel){
+  edTrazo(()=>{ edCtx.moveTo(x1,y1); edCtx.lineTo(x2,y2); },color,lw);
+  if(sel) edPuntosSel([[x1,y1],[x2,y2]]);
 }
 
 function edDrawPeaArrow(x1,y1,x2,y2,color,lw,as,sel){
-  const angle=Math.atan2(y2-y1,x2-x1);
-  if(Math.hypot(x2-x1,y2-y1)<2) return;
-  const ex=x2-Math.cos(angle)*as*0.7,ey=y2-Math.sin(angle)*as*0.7;
-  edCtx.strokeStyle=color;edCtx.lineWidth=lw;edCtx.lineCap='round';
-  edCtx.setLineDash([8,5]);
-  edCtx.beginPath();edCtx.moveTo(x1,y1);edCtx.lineTo(ex,ey);edCtx.stroke();
-  edCtx.setLineDash([]);
-  edCtx.fillStyle=color;edCtx.beginPath();
-  edCtx.moveTo(x2,y2);edCtx.lineTo(x2-Math.cos(angle-0.4)*as,y2-Math.sin(angle-0.4)*as);
-  edCtx.lineTo(x2-Math.cos(angle+0.4)*as,y2-Math.sin(angle+0.4)*as);edCtx.closePath();edCtx.fill();
-  if(sel){
-    edCtx.fillStyle='#0A84FF';edCtx.strokeStyle='white';edCtx.lineWidth=1.5;
-    [[x1,y1],[x2,y2]].forEach(([x,y])=>{edCtx.beginPath();edCtx.arc(x,y,5,0,2*Math.PI);edCtx.fill();edCtx.stroke();});
-  }
+  const largo=Math.hypot(x2-x1,y2-y1); if(largo<2) return;
+  const ang=Math.atan2(y2-y1,x2-x1), {L}=edPunta(lw,as), k=Math.min(L*0.85,largo);
+  const ex=x2-Math.cos(ang)*k, ey=y2-Math.sin(ang)*k;
+  edTrazo(()=>{ edCtx.moveTo(x1,y1); edCtx.lineTo(ex,ey); },color,lw,[Math.max(8,lw*2.2),Math.max(5,lw*1.6)]);
+  edDibujarPunta(x2,y2,ang,color,lw,as);
+  if(sel) edPuntosSel([[x1,y1],[x2,y2]]);
 }
 
 function edDrawArrow(x1,y1,x2,y2,color,lw,as,sel){
-  const angle=Math.atan2(y2-y1,x2-x1);
-  if(Math.hypot(x2-x1,y2-y1)<2) return;
-  const ex=x2-Math.cos(angle)*as*0.7,ey=y2-Math.sin(angle)*as*0.7;
-  edCtx.strokeStyle=color;edCtx.lineWidth=lw;edCtx.lineCap='round';
-  edCtx.beginPath();edCtx.moveTo(x1,y1);edCtx.lineTo(ex,ey);edCtx.stroke();
-  edCtx.fillStyle=color;edCtx.beginPath();
-  edCtx.moveTo(x2,y2);edCtx.lineTo(x2-Math.cos(angle-0.4)*as,y2-Math.sin(angle-0.4)*as);
-  edCtx.lineTo(x2-Math.cos(angle+0.4)*as,y2-Math.sin(angle+0.4)*as);edCtx.closePath();edCtx.fill();
+  const largo=Math.hypot(x2-x1,y2-y1); if(largo<2) return;
+  const ang=Math.atan2(y2-y1,x2-x1), {L}=edPunta(lw,as), k=Math.min(L*0.85,largo);
+  const ex=x2-Math.cos(ang)*k, ey=y2-Math.sin(ang)*k;
+  edTrazo(()=>{ edCtx.moveTo(x1,y1); edCtx.lineTo(ex,ey); },color,lw);
+  edDibujarPunta(x2,y2,ang,color,lw,as);
 }
 
 function edDrawCurve(el,lw,sel){
-  edCtx.strokeStyle=el.color;edCtx.lineWidth=lw;edCtx.lineCap='round';
-  edCtx.beginPath();edCtx.moveTo(el.x1,el.y1);edCtx.bezierCurveTo(el.cx1,el.cy1,el.cx2,el.cy2,el.x2,el.y2);edCtx.stroke();
-  const p=edBezPt(0.99,el);const angle=Math.atan2(el.y2-p.y,el.x2-p.x);const as=el.as||12;
-  edCtx.fillStyle=el.color;edCtx.beginPath();
-  edCtx.moveTo(el.x2,el.y2);edCtx.lineTo(el.x2-Math.cos(angle-0.4)*as,el.y2-Math.sin(angle-0.4)*as);
-  edCtx.lineTo(el.x2-Math.cos(angle+0.4)*as,el.y2-Math.sin(angle+0.4)*as);edCtx.closePath();edCtx.fill();
-  if(sel){
-    edCtx.strokeStyle='rgba(10,132,255,0.6)';edCtx.lineWidth=1;edCtx.setLineDash([3,3]);
-    edCtx.beginPath();edCtx.moveTo(el.x1,el.y1);edCtx.lineTo(el.cx1,el.cy1);edCtx.stroke();
-    edCtx.beginPath();edCtx.moveTo(el.x2,el.y2);edCtx.lineTo(el.cx2,el.cy2);edCtx.stroke();
-    edCtx.setLineDash([]);
-    [[el.cx1,el.cy1,'#FF9F0A'],[el.cx2,el.cy2,'#30D158']].forEach(([x,y,c])=>{
-      edCtx.beginPath();edCtx.arc(x,y,5,0,2*Math.PI);edCtx.fillStyle=c;edCtx.fill();
-      edCtx.strokeStyle='white';edCtx.lineWidth=1;edCtx.stroke();
-    });
-  }
+  const {L}=edPunta(lw,el.as||12), tip={x:el.x2,y:el.y2};
+  // punto de la curva donde empieza la punta (a ~0.85 L del extremo)
+  let t=1;
+  while(t>0.02){ const q=edBezPt(t,el); if(Math.hypot(q.x-tip.x,q.y-tip.y)>=L*0.85) break; t-=0.005; }
+  const [p0,a,d,f]=edBezCortar(el,t);
+  edTrazo(()=>{ edCtx.moveTo(p0.x,p0.y); edCtx.bezierCurveTo(a.x,a.y,d.x,d.y,f.x,f.y); },el.color,lw);
+  edDibujarPunta(tip.x,tip.y,Math.atan2(tip.y-f.y,tip.x-f.x),el.color,lw,el.as||12);
+  if(sel) edManijasCurva(el);
 }
 
 function edDrawCurveNoArrow(el,lw,sel){
-  edCtx.strokeStyle=el.color;edCtx.lineWidth=lw;edCtx.lineCap='round';
-  edCtx.beginPath();edCtx.moveTo(el.x1,el.y1);edCtx.bezierCurveTo(el.cx1,el.cy1,el.cx2,el.cy2,el.x2,el.y2);edCtx.stroke();
-  if(sel){
-    edCtx.strokeStyle='rgba(10,132,255,0.6)';edCtx.lineWidth=1;edCtx.setLineDash([3,3]);
-    edCtx.beginPath();edCtx.moveTo(el.x1,el.y1);edCtx.lineTo(el.cx1,el.cy1);edCtx.stroke();
-    edCtx.beginPath();edCtx.moveTo(el.x2,el.y2);edCtx.lineTo(el.cx2,el.cy2);edCtx.stroke();
-    edCtx.setLineDash([]);
-    [[el.cx1,el.cy1,'#FF9F0A'],[el.cx2,el.cy2,'#30D158']].forEach(([x,y,c])=>{
-      edCtx.beginPath();edCtx.arc(x,y,5,0,2*Math.PI);edCtx.fillStyle=c;edCtx.fill();
-      edCtx.strokeStyle='white';edCtx.lineWidth=1;edCtx.stroke();
-    });
-    // Endpoint handles
-    edCtx.fillStyle='#0A84FF';edCtx.strokeStyle='white';edCtx.lineWidth=1.5;
-    [[el.x1,el.y1],[el.x2,el.y2]].forEach(([x,y])=>{edCtx.beginPath();edCtx.arc(x,y,5,0,2*Math.PI);edCtx.fill();edCtx.stroke();});
-  }
+  edTrazo(()=>{ edCtx.moveTo(el.x1,el.y1); edCtx.bezierCurveTo(el.cx1,el.cy1,el.cx2,el.cy2,el.x2,el.y2); },el.color,lw);
+  if(sel){ edManijasCurva(el); edPuntosSel([[el.x1,el.y1],[el.x2,el.y2]]); }
 }
 
 function edDrawUTurn(el,lw,sel){
@@ -4540,7 +4799,7 @@ function edDrawHandles(el){
 function edLoadBg(e){
   const file=e.target.files[0];if(!file) return;
   const r=new FileReader();
-  r.onload=ev=>{edState.bgImage=ev.target.result;edBgImg=new Image();edBgImg.onload=()=>edRender();edBgImg.src=edState.bgImage;edSaveStorage();};
+  r.onload=async ev=>{edState.bgImage=await edComprimirImagen(ev.target.result,2400,0.85);edBgImg=new Image();edBgImg.onload=()=>edRender();edBgImg.src=edState.bgImage;edSaveStorage();e.target.value='';};
   r.readAsDataURL(file);
 }
 function edClearBg(){edState.bgImage=null;edBgImg=new Image();edBgImg.onload=()=>edRender();edSaveStorage();edRender();}
@@ -4559,8 +4818,8 @@ function edRefreshHPVals(){
 
 // Devuelve el color del acceso al que pertenece un movimiento/código
 function edGetMovColor(movCode){
-  if(String(movCode).startsWith('TOT_')){
-    const accId=String(movCode).replace('TOT_','');
+  if(String(movCode).startsWith('TOT_')||String(movCode).startsWith('SAL_')){
+    const accId=String(movCode).slice(4);
     const accActivos=S.accesos.filter(a=>a.activo);
     const ai=accActivos.findIndex(a=>a.id===accId);
     return ED_ACC_COLORS[(ai>=0?ai:0)%6];
@@ -4581,6 +4840,10 @@ function edGetMovColor(movCode){
 
 // Devuelve etiqueta legible para mostrar en el canvas
 function edGetMovLabel(movCode){
+  if(String(movCode).startsWith('SAL_')){
+    const acc=S.accesos.find(a=>a.id===String(movCode).slice(4));
+    return 'Salida '+(acc?acc.label:String(movCode).slice(4));
+  }
   if(String(movCode).startsWith('TOT_')){
     const accId=String(movCode).replace('TOT_','');
     const acc=S.accesos.find(a=>a.id===accId);
@@ -4621,6 +4884,7 @@ function edGetHPVal(movCode){
     }
     return total;
   }
+  if(String(movCode).startsWith('SAL_')) return edTotalSalida(String(movCode).slice(4),t);
   return getMovTotalForFlujo(parseInt(movCode),t)||0;
 }
 
@@ -4679,6 +4943,19 @@ function edRenderHPMovs(){
     elAcc.innerHTML=h;
   }
 
+  // ── Total por salida: lo que sale por cada acceso ──
+  const elSal=document.getElementById('ed-hp-sal');
+  if(elSal){
+    elSal.innerHTML=accActivos.map((acc,ai)=>{
+      const code='SAL_'+acc.id, total=edTotalSalida(acc.id,t);
+      return `<div class="ed-mov-item ${edSelectedMov===code?'sel':''}" onclick="edSelectedMov='${code}';edSetTool('hpval');edRenderHPMovs()">
+        <div style="width:10px;height:10px;border-radius:3px;border:2px solid ${ED_ACC_COLORS[ai%6]};flex-shrink:0"></div>
+        <span style="flex:1;font-weight:600;color:#1D1D1F">${acc.label}</span>
+        <span style="font-weight:700;font-size:13px;color:${ED_ACC_COLORS[ai%6]}">${total}</span>
+      </div>`;
+    }).join('');
+  }
+
   // ── Peatonal: cada lado activo individualmente ──
   const elPeat=document.getElementById('ed-hp-peat');
   if(elPeat){
@@ -4727,50 +5004,52 @@ function edSelectAcc(i){edAccIdx=i;edColor=ED_ACC_COLORS[i];edRenderAccList();}
 function edSelectFreeColor(c){edColor=c;edAccIdx=-1;edRenderAccList();}
 
 // ── PROPS PANEL ──
+const ED_TIPOS={line:['fa-minus','Línea'],arrow:['fa-arrow-right-long','Flecha'],curve:['fa-arrow-turn-up','Curva'],curvenoa:['fa-bezier-curve','Curva libre'],
+  pearrow:['fa-person-walking','Flecha peatonal'],text:['fa-font','Texto'],north:['fa-compass','Norte'],hpval:['fa-hashtag','Valor HP'],uturn:['fa-rotate-left','Vuelta en U']};
 function edUpdateProps(){
   const el=document.getElementById('ed-props');if(!el) return;
   const elem=edState.elements.find(e=>e.id===edSelectedId);
-  if(!elem){el.innerHTML='<div style="font-size:11px;color:#636366;text-align:center;padding:8px 0">Selecciona un elemento</div>';return;}
-  let h='';
-  h+=`<div class="ed-prop-row"><div class="ed-prop-label">Color</div><input type="color" value="${elem.color||'#ffffff'}" style="width:28px;height:22px;padding:0;border:none;cursor:pointer" oninput="edSetProp(${elem.id},'color',this.value)"></div>`;
+  if(!elem){ el.innerHTML='<div class="edx-vacio-mini">Nada seleccionado</div>'; return; }
+  const id=elem.id, t=ED_TIPOS[elem.type]||['fa-shapes',elem.type];
+  // fila con deslizador y valor visible
+  const rango=(lab,prop,min,max,val,paso)=>`<div class="edx-prop"><span>${lab}</span><input type="range" min="${min}" max="${max}" step="${paso||1}" value="${val}" oninput="edSetProp(${id},'${prop}',+this.value);this.nextElementSibling.textContent=this.value"><b>${val}</b></div>`;
+  let h=`<div class="edx-sel-tit"><i class="fa-solid ${t[0]}"></i> ${t[1]}${elem.movCode?' <span>'+String(elem.movLabel||elem.movCode)+'</span>':''}</div>`;
+  // color: accesos con un clic, o cualquier otro
+  h+=`<div class="edx-prop"><span>Color</span><div class="edx-colores">${ED_ACC_COLORS.map(c=>`<button style="background:${c}" class="${(elem.color||'').toLowerCase()===c.toLowerCase()?'sel':''}" title="${c}" onclick="edSetProp(${id},'color','${c}');edUpdateProps()"></button>`).join('')}<input type="color" value="${elem.color||'#ffffff'}" title="Otro color" oninput="edSetProp(${id},'color',this.value)"></div></div>`;
   if(['line','arrow','curve','curvenoa','pearrow'].includes(elem.type)){
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Grosor</div><input type="range" min="1" max="12" value="${elem.width||3}" style="width:70px" oninput="edSetProp(${elem.id},'width',+this.value)"><span style="font-size:10px;color:#AEAEB2;min-width:12px">${elem.width||3}</span></div>`;
-    if(elem.type!=='line'&&elem.type!=='pearrow'&&elem.type!=='curvenoa') h+=`<div class="ed-prop-row"><div class="ed-prop-label">Punta</div><input type="range" min="6" max="30" value="${elem.as||12}" style="width:70px" oninput="edSetProp(${elem.id},'as',+this.value)"></div>`;
+    h+=rango('Grosor','width',1,12,elem.width||3);
+    if(['arrow','curve','pearrow'].includes(elem.type)) h+=rango('Punta','as',6,40,elem.as||12);
   }
-
-  if(elem.type==='uturn'){
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Radio</div><input type="range" min="20" max="150" value="${elem.radius||40}" style="width:70px" oninput="edSetProp(${elem.id},'radius',+this.value)"></div>`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Rot°</div><input type="range" min="0" max="360" value="${elem.rotation||0}" style="width:70px" oninput="edSetProp(${elem.id},'rotation',+this.value)"><span style="font-size:10px;color:#AEAEB2">${elem.rotation||0}</span></div>`;
-  }
+  if(elem.type==='uturn'){ h+=rango('Radio','radius',20,150,elem.radius||40); h+=rango('Giro °','rotation',0,360,elem.rotation||0); }
   if(elem.type==='text'){
-    h+=`<input class="ed-input" value="${elem.text||''}" style="margin-bottom:6px" oninput="edSetProp(${elem.id},'text',this.value)">`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Tamaño</div><input type="range" min="8" max="48" value="${elem.fontSize||14}" style="width:60px" oninput="edSetProp(${elem.id},'fontSize',+this.value)"><span style="font-size:10px;color:#AEAEB2">${elem.fontSize||14}</span></div>`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Negrita</div><input type="checkbox" ${elem.bold?'checked':''} onchange="edSetProp(${elem.id},'bold',this.checked)"></div>`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Rot°</div><input type="range" min="-180" max="180" value="${elem.rotation||0}" style="width:60px" oninput="edSetProp(${elem.id},'rotation',+this.value)"><span style="font-size:10px;color:#AEAEB2">${elem.rotation||0}</span></div>`;
+    h+=`<div class="edx-prop"><span>Texto</span><input class="edx-campo" value="${String(elem.text||'').replace(/"/g,'&quot;')}" oninput="edSetProp(${id},'text',this.value)"></div>`;
+    h+=rango('Tamaño','fontSize',8,60,elem.fontSize||14);
+    h+=rango('Giro °','rotation',-180,180,elem.rotation||0);
+    h+=`<div class="edx-prop"><span>Negrita</span><label class="edx-sw"><input type="checkbox" ${elem.bold?'checked':''} onchange="edSetProp(${id},'bold',this.checked)"> Sí</label></div>`;
   }
-  if(elem.type==='north'){
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Tamaño</div><input type="range" min="20" max="120" value="${elem.size||50}" style="width:70px" oninput="edSetProp(${elem.id},'size',+this.value)"></div>`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Rot°</div><input type="range" min="-180" max="180" value="${elem.rotation||0}" style="width:60px" oninput="edSetProp(${elem.id},'rotation',+this.value)"><span style="font-size:10px;color:#AEAEB2">${elem.rotation||0}</span></div>`;
-  }
+  if(elem.type==='north'){ h+=rango('Tamaño','size',20,160,elem.size||50); h+=rango('Giro °','rotation',-180,180,elem.rotation||0); }
   if(elem.type==='hpval'){
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Mov</div><input class="ed-input" style="width:55px" value="${elem.movCode||''}" oninput="edSetProp(${elem.id},'movCode',this.value)"></div>`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Valor</div><input type="number" class="ed-input" style="width:55px" value="${elem.value||0}" oninput="edSetProp(${elem.id},'value',+this.value||0)"></div>`;
-    h+=`<div class="ed-prop-row"><div class="ed-prop-label">Tamaño</div><input type="range" min="9" max="22" value="${elem.fontSize||13}" style="width:60px" oninput="edSetProp(${elem.id},'fontSize',+this.value)"></div>`;
+    h+=`<div class="edx-prop"><span>Movimiento</span><input class="edx-campo" value="${elem.movCode||''}" oninput="edSetProp(${id},'movCode',this.value)"></div>`;
+    h+=`<div class="edx-prop"><span>Valor</span><input type="number" class="edx-campo" value="${elem.value||0}" oninput="edSetProp(${id},'value',+this.value||0)"></div>`;
+    h+=rango('Tamaño','fontSize',7,40,elem.fontSize||13);
+    h+=rango('Giro °','rotation',-180,180,elem.rotation||0);
   }
-  h+=`<div style="display:flex;gap:4px;margin-top:8px">
-    <button class="btn" style="flex:1;font-size:10px;padding:4px" onclick="edDupe()">⎘ Duplicar</button>
-    <button class="btn" style="flex:1;font-size:10px;padding:4px;background:#FF453A;border-color:transparent;color:white" onclick="edDeleteSelected()"><i class="fa-solid fa-trash"></i></button>
-  </div>
-  <div style="display:flex;gap:4px;margin-top:4px">
-    <button class="btn" style="flex:1;font-size:10px;padding:4px" onclick="edFront()">↑ Frente</button>
-    <button class="btn" style="flex:1;font-size:10px;padding:4px" onclick="edBack()">↓ Atrás</button>
+  h+=`<div class="edx-acciones">
+    <button class="edx-btn" onclick="edDupe()"><i class="fa-solid fa-clone"></i> Duplicar</button>
+    <button class="edx-btn edx-peligro" onclick="edDeleteSelected()"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+    <button class="edx-btn" onclick="edFront()" title="Dibujar encima de los demás"><i class="fa-solid fa-arrow-up"></i> Al frente</button>
+    <button class="edx-btn" onclick="edBack()" title="Dibujar debajo de los demás"><i class="fa-solid fa-arrow-down"></i> Atrás</button>
   </div>`;
   el.innerHTML=h;
 }
 
+let _edGuardarT=null;
 function edSetProp(id,prop,val){
   const el=edState.elements.find(e=>e.id===id);if(!el) return;
-  el[prop]=val;edRender();edSaveStorage();edUpdateProps();
+  el[prop]=val; edRender(); edUpdateElemList();
+  // Antes se redibujaba el panel en cada movimiento del deslizador (se soltaba al arrastrar) y se
+  // guardaba todo el dibujo con su imagen en cada paso. Ahora el guardado espera a que termines.
+  clearTimeout(_edGuardarT); _edGuardarT=setTimeout(edSaveStorage,400);
 }
 
 function edDupe(){
@@ -4789,12 +5068,14 @@ function edBack(){const i=edState.elements.findIndex(e=>e.id===edSelectedId);if(
 function edUpdateElemList(){
   const el=document.getElementById('ed-elem-list');if(!el) return;
   document.getElementById('ed-elem-count').textContent=edState.elements.length;
-  const labels={line:'─ Línea',arrow:'→ Flecha',pearrow:'⇢ Peatonal',curve:'↪ Curva',curvenoa:'↫ CurvaSF',text:'T Texto',north:'N Norte',hpval:'# HP'};
-  el.innerHTML=edState.elements.map(e=>`
-    <div class="ed-elem-item ${e.id===edSelectedId?'sel':''}" onclick="edSelectEl(${e.id})">
-      <div style="width:7px;height:7px;border-radius:50%;background:${e.color||'#8E8E93'};flex-shrink:0"></div>
-      <span>${labels[e.type]||e.type}${e.text?' '+e.text.substring(0,8):e.movCode?' '+e.movCode:''}</span>
-    </div>`).reverse().join('');
+  if(!edState.elements.length){ el.innerHTML='<div class="edx-vacio-mini">Sin elementos</div>'; return; }
+  el.innerHTML=edState.elements.map(e=>{
+    const t=ED_TIPOS[e.type]||['fa-shapes',e.type];
+    const det=e.type==='hpval'?`${e.movLabel||e.movCode}: ${e.value}`:e.type==='text'?String(e.text||'').substring(0,22):'';
+    return `<div class="ed-elem-item edx-item ${e.id===edSelectedId?'sel':''}" onclick="edSelectEl(${e.id})">
+      <span class="edx-item-dot" style="background:${e.color||'#9aa0a6'}"></span><i class="fa-solid ${t[0]}"></i>
+      <span class="edx-item-tx">${t[1]}${det?' · <b>'+det.replace(/</g,'&lt;')+'</b>':''}</span></div>`;
+  }).reverse().join('');
 }
 function edSelectEl(id){edSelectedId=id;edSetTool('select');edUpdateProps();edUpdateElemList();edRender();}
 
@@ -4805,9 +5086,19 @@ function edResetView(){edViewX=0;edViewY=0;edScale=1;const z=document.getElement
 
 // ── STORAGE ──
 function edSaveStorage(){
-  try{localStorage.setItem('afrovial_editor_draw',JSON.stringify({elements:edState.elements,bgImage:edState.bgImage,nextId:edState.nextId}));}catch(e){}
+  const base={elements:edState.elements,nextId:edState.nextId};
+  if(lsGuardar('afrovial_editor_draw',JSON.stringify(Object.assign({bgImage:edState.bgImage},base)))) return true;
+  if(edState.bgImage && lsGuardar('afrovial_editor_draw',JSON.stringify(Object.assign({bgImage:null},base)))){
+    avisoAlmacenamiento('<i class="fa-solid fa-triangle-exclamation"></i> Memoria del navegador llena: el dibujo se guardó sin la imagen de fondo. Exporta el JSON para conservarla.');
+    return true;
+  }
+  avisoAlmacenamiento('<i class="fa-solid fa-triangle-exclamation"></i> Memoria del navegador llena: el dibujo del editor no se está guardando. Exporta el JSON ahora.');
+  return false;
 }
 function edLoadStorage(){
+  // Si el editor ya tiene contenido en memoria (por ejemplo, de un JSON recién cargado),
+  // no pisarlo con lo guardado, que puede venir sin imagen de fondo.
+  if(edState.elements.length||edState.bgImage) return;
   try{
     const raw=localStorage.getItem('afrovial_editor_draw');
     if(!raw) return;
@@ -4816,6 +5107,955 @@ function edLoadStorage(){
     if(edState.bgImage){edBgImg=new Image();edBgImg.onload=()=>edRender();edBgImg.src=edState.bgImage;}
     edUpdateElemList();edUpdateProps();
   }catch(e){}
+}
+
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  EDITOR: interfaz (pestañas, menú de fondo, ayuda, estado vacío, ajustar vista)
+// ══════════════════════════════════════════════════════════════
+function edxTab(t){
+  document.querySelectorAll('.edx-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.edx-pan').forEach(p=>p.classList.toggle('active',p.dataset.pan===t));
+}
+function edxMenu(e){ e.stopPropagation(); document.getElementById('edx-menu-fondo').classList.toggle('show'); }
+function edxCerrarMenu(){ const m=document.getElementById('edx-menu-fondo'); if(m) m.classList.remove('show'); }
+document.addEventListener('click',edxCerrarMenu);
+const ED_AYUDA={
+  select:'Seleccionar: clic para elegir, arrastrar para mover. Alt + arrastrar mueve la vista.',
+  arrow:'Flecha: clic en el inicio, clic en el final.',
+  curve:'Curva: inicio, final, control 1, control 2. Esc cancela.',
+  pearrow:'Peatonal: clic en el inicio, clic en el final.',
+  line:'Línea: clic en el inicio, clic en el final.',
+  curvenoa:'Curva libre: inicio, final, control 1, control 2. Esc cancela.',
+  hpval:'Valor HP: elige un valor en la pestaña Valores y haz clic en el dibujo.',
+  text:'Texto: clic donde va el texto.',
+  north:'Norte: clic donde va el símbolo.'
+};
+// la ayuda nueva reemplaza a la corta; Valor HP abre su pestaña
+const _edSetToolBase=edSetTool;
+edSetTool=function(t){
+  _edSetToolBase(t);
+  const h=document.getElementById('ed-hint'); if(h&&ED_AYUDA[t]) h.textContent=ED_AYUDA[t];
+  if(t==='hpval') edxTab('hp');
+};
+// estado vacío: se muestra cuando no hay fondo ni dibujo
+const _edRenderBase=edRender;
+// el editor ocupa exactamente el alto visible (antes la parte de abajo quedaba fuera de la pantalla)
+const _edResizeBase=edResize;
+edResize=function(){
+  const pg=document.getElementById('page-editor');
+  if(pg&&pg.classList.contains('active')) pg.style.height=Math.max(400,window.innerHeight-pg.getBoundingClientRect().top-8)+'px';
+  _edResizeBase();
+};
+window.addEventListener('resize',()=>edResize());
+function edxZoomTxt(){ const t=Math.round(edScale*100)+'%'; ['ed-zoom','edx-zoom-bar'].forEach(i=>{ const e=document.getElementById(i); if(e) e.textContent=t; }); }
+edRender=function(){
+  _edRenderBase();
+  edxZoomTxt();
+  const v=document.getElementById('edx-vacio');
+  if(v) v.classList.toggle('show',!edState.bgImage&&!edState.elements.length);
+};
+// ajustar el fondo (o el dibujo) a la pantalla
+function edAjustarVista(){
+  if(!edCanvas) return;
+  let w=edBgImg&&edBgImg.naturalWidth, h=edBgImg&&edBgImg.naturalHeight, x0=0, y0=0;
+  if(!(edState.bgImage&&w)){
+    const xs=[], ys=[];
+    edState.elements.forEach(e=>['x','x1','x2','cx1','cx2'].forEach(k=>{ if(typeof e[k]==='number') xs.push(e[k]); }));
+    edState.elements.forEach(e=>['y','y1','y2','cy1','cy2'].forEach(k=>{ if(typeof e[k]==='number') ys.push(e[k]); }));
+    if(!xs.length){ edResetView(); return; }
+    x0=Math.min(...xs)-40; y0=Math.min(...ys)-40; w=Math.max(...xs)+40-x0; h=Math.max(...ys)+40-y0;
+  }
+  edScale=Math.min(edCanvas.width/w,edCanvas.height/h)*0.96;
+  edViewX=(edCanvas.width-w*edScale)/2-x0*edScale;
+  edViewY=(edCanvas.height-h*edScale)/2-y0*edScale;
+  edxZoomTxt();
+  edRender();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FONDO DESDE MAPA + FLUJOGRAMA AUTOMÁTICO
+   1. Se ubica la intersección en un mapa (Leaflet).
+   2. Se leen las vías de OSM (Overpass) y se detectan los brazos con su rumbo y nombre.
+   3. Se captura el mapa como imagen de fondo del editor (norte arriba, escala conocida).
+   4. edGenerarFlujograma dibuja flechas, valores HP, totales y cruces peatonales con
+      los mismos elementos del editor, así que todo se puede retocar a mano.
+   Convención de movimientos: base+0 vuelta en U, +1 izquierda, +2 directo, +3 derecha.
+   ══════════════════════════════════════════════════════════════ */
+const MP_FONDOS={
+  // Esquema vial: se dibuja con las vías y edificaciones de OSM. Nítido a cualquier escala y sin claves de API.
+  esquema:{max:99, attr:'Vías: © OpenStreetMap contributors', vector:true},
+  osm:    {url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', max:19, attr:'© OpenStreetMap contributors'}
+};
+const MP_CARDINAL={N:0,E:90,S:180,O:270};
+const MP_LARGO_BRAZO=40;   // metros: largo con que se dibuja cada brazo en el mapa
+
+let mpMapa=null, mpCapa=null, mpCentro=null, mpCentroMk=null, mpPiernas=[], mpCapaPiernas=null, mpModoAgregar=false, mpBusy=false;
+
+// ── Leaflet: se carga solo al abrir el mapa; primero la copia local, si no existe, el CDN ──
+function mpCargarLeaflet(){
+  if(window.L) return Promise.resolve();
+  const cargar=(css,js)=>new Promise((ok,mal)=>{
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href=css; document.head.appendChild(l);
+    const s=document.createElement('script'); s.src=js; s.onload=ok; s.onerror=()=>{ l.remove(); s.remove(); mal(); };
+    document.head.appendChild(s);
+  });
+  return cargar('vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js')
+    .catch(()=>cargar('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css','https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'));
+}
+
+// ── Geodesia simple (suficiente para tramos de decenas de metros) ──
+const mpRad=g=>g*Math.PI/180, mpGrad=r=>r*180/Math.PI;
+function mpRumbo(a,b){ // grados desde el norte, sentido horario
+  const y=Math.sin(mpRad(b.lng-a.lng))*Math.cos(mpRad(b.lat));
+  const x=Math.cos(mpRad(a.lat))*Math.sin(mpRad(b.lat))-Math.sin(mpRad(a.lat))*Math.cos(mpRad(b.lat))*Math.cos(mpRad(b.lng-a.lng));
+  return (mpGrad(Math.atan2(y,x))+360)%360;
+}
+function mpDist(a,b){
+  const R=6371008.8, dLat=mpRad(b.lat-a.lat), dLng=mpRad(b.lng-a.lng);
+  const h=Math.sin(dLat/2)**2+Math.cos(mpRad(a.lat))*Math.cos(mpRad(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function mpDestino(p,rumbo,m){
+  const R=6371008.8, d=m/R, t=mpRad(rumbo), la=mpRad(p.lat), lo=mpRad(p.lng);
+  const la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(t));
+  const lo2=lo+Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2));
+  return {lat:mpGrad(la2),lng:mpGrad(lo2)};
+}
+const mpDifAng=(a,b)=>{ const d=Math.abs(a-b)%360; return d>180?360-d:d; };
+const mpEsc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ── Abrir / cerrar ──
+async function mpAbrir(){
+  const ov=document.getElementById('mapa-overlay');
+  ov.classList.add('show');
+  mpEstado('Cargando mapa…');
+  try{ await mpCargarLeaflet(); }
+  catch(e){ mpEstado('No se pudo cargar el mapa. Revisa la conexión a internet.', true); return; }
+  if(!mpMapa){
+    mpMapa=L.map('mp-mapa',{zoomControl:true,maxZoom:20}).setView([-9.19,-75.0],6);
+    mpCapaPiernas=L.layerGroup().addTo(mpMapa);
+    mpMapa.on('click',mpClicMapa);
+    mpCambiarFondo();
+    const q=document.getElementById('mp-buscar');
+    if(q && !q.value) q.value=(S.gen&&S.gen.dist)||'';
+  }
+  setTimeout(()=>mpMapa.invalidateSize(),60);
+  const g=S.flujoGeo;
+  if(g&&g.lat&&!mpCentro){
+    mpMapa.setView([g.lat,g.lon],19);
+    if(g.base&&MP_FONDOS[g.base]){ document.getElementById('mp-fondo').value=g.base; }
+    mpFijarCentro({lat:g.lat,lng:g.lon});
+    mpPiernas=(g.piernas||[]).map(p=>Object.assign({},p));
+    mpDibujarPiernas(); mpRenderLista();
+    mpEstado('Se cargó la ubicación guardada. Puedes ajustar los brazos o volver a detectar.');
+  } else if(!mpCentro){
+    mpEstado('Busca la ciudad o la intersección y haz clic justo en el cruce.');
+  }
+}
+function mpCerrar(){
+  document.getElementById('mapa-overlay').classList.remove('show');
+  mpModoAgregar=false;
+}
+function mpEstado(txt,error){
+  const el=document.getElementById('mp-estado'); if(!el) return;
+  el.textContent=txt; el.classList.toggle('error',!!error);
+}
+function mpCambiarFondo(){
+  if(!mpMapa) return;
+  // la vista previa siempre usa OSM; el esquema vial se dibuja recién al capturar
+  const f=MP_FONDOS.osm;
+  if(mpCapa) mpMapa.removeLayer(mpCapa);
+  mpCapa=L.tileLayer(f.url,{maxZoom:20,maxNativeZoom:f.max,attribution:f.attr,crossOrigin:true}).addTo(mpMapa);
+}
+
+// ── Búsqueda: coordenadas "lat, lon" o texto (Nominatim) ──
+async function mpBuscar(){
+  const q=document.getElementById('mp-buscar').value.trim(); if(!q||!mpMapa) return;
+  const m=q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if(m){
+    const p={lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+    mpMapa.setView([p.lat,p.lng],19);
+    mpFijarCentro(p); mpDetectar();
+    return;
+  }
+  mpEstado('Buscando…');
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pe&q='+encodeURIComponent(q),{headers:{'Accept-Language':'es'}});
+    const d=await r.json();
+    if(!d.length){ mpEstado('No se encontró ese lugar. Prueba con la ciudad o pega coordenadas.', true); return; }
+    mpMapa.setView([+d[0].lat,+d[0].lon], d[0].class==='highway'?18:16);
+    mpEstado('Acércate y haz clic justo en el cruce de las vías.');
+  }catch(e){ mpEstado('No se pudo buscar (sin conexión o servicio ocupado).', true); }
+}
+
+// ── Clic en el mapa: fija el cruce o agrega un brazo manual ──
+function mpClicMapa(e){
+  if(mpBusy) return;
+  if(mpModoAgregar && mpCentro){
+    mpPiernas.push({rumbo:mpRumbo(mpCentro,e.latlng),nombre:'',ancho:7,acc:null,sentido:'',manual:true});
+    mpModoAgregar=false; document.getElementById('mp-btn-agregar').classList.remove('activo');
+    mpAsignar(); mpDibujarPiernas(); mpRenderLista();
+    mpEstado('Brazo agregado. Revisa a qué acceso corresponde.');
+    return;
+  }
+  mpFijarCentro(e.latlng);
+  mpDetectar();
+}
+function mpFijarCentro(p){
+  mpCentro={lat:p.lat,lng:p.lng};
+  if(!mpCentroMk){
+    mpCentroMk=L.marker([p.lat,p.lng],{draggable:true,icon:L.divIcon({className:'mp-centro',iconSize:[18,18]})}).addTo(mpMapa);
+    mpCentroMk.on('drag',ev=>{ mpCentro={lat:ev.latlng.lat,lng:ev.latlng.lng}; mpDibujarPiernas(true); });
+    mpCentroMk.on('dragend',()=>mpDibujarPiernas());
+  } else mpCentroMk.setLatLng([p.lat,p.lng]);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DATOS DE OSM
+//  Fuente principal: OpenFreeMap, que publica OSM como teselas vectoriales (MVT) en un CDN:
+//  archivos fijos, sin clave y sin colas de consultas. Respaldo: Overpass (consultas públicas,
+//  a veces saturadas). Ambas fuentes se convierten al mismo formato de "zona":
+//    { centro, fuente, vias:[{id,clase,nombre,ow,w,pts}], nombres:[{nombre,pts}], edif:[anillos], verdes:[anillos] }
+// ══════════════════════════════════════════════════════════════
+const MP_OFM_TILEJSON='https://tiles.openfreemap.org/planet';
+const MP_OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+const MP_W=1800, MP_H=1350;   // tamaño de la imagen de fondo capturada (px)
+const MP_RADIO_ZONA=350;   // metros alrededor del cruce: se descargan una vez y sirven para detectar y para el esquema
+const MP_Z=14;             // zoom de las teselas vectoriales (el de mayor detalle)
+const MP_VEH=/^(motorway|trunk|primary|secondary|tertiary|minor|busway)$/;            // vías que pueden ser brazos
+const MP_DIBUJO=/^(motorway|trunk|primary|secondary|tertiary|minor|busway|service|track|path|raceway)$/;
+let mpErrores=[];
+
+function mpFetchT(url,ms,opc){
+  const c=new AbortController(), t=setTimeout(()=>c.abort(),ms);
+  return fetch(url,Object.assign({signal:c.signal},opc||{})).finally(()=>clearTimeout(t));
+}
+const mpMotivo=e=>e&&e.name==='AbortError'?'no respondió a tiempo':e&&e.name==='TypeError'?'bloqueado o sin conexión':(e&&e.message)||'error';
+
+// Clase de vía unificada (OpenMapTiles usa "minor" para residencial, etc.; Overpass usa la etiqueta highway)
+function mpClase(c){
+  c=String(c||'').replace(/_link$/,'').replace(/_construction$/,'');
+  return ({residential:'minor',unclassified:'minor',living_street:'minor',road:'minor',
+           footway:'path',cycleway:'path',steps:'path',pedestrian:'path',bridleway:'path'})[c]||c;
+}
+// Ancho de calzada estimado (m). Las calzadas de un sentido de una avenida con separador se toman más angostas.
+function mpAnchoVia(v){
+  if(v.w>2) return v.w;
+  let a={motorway:14,trunk:14,primary:12,secondary:10,tertiary:8,minor:7,busway:7,service:4.5,track:3,path:2,raceway:8}[v.clase]||6;
+  if(v.ow&&a>=8) a*=0.6;
+  return a;
+}
+
+// ── Decodificador MVT mínimo (protobuf) ──
+function MvtPB(b,p,fin){ this.b=b; this.p=p; this.fin=fin; }
+MvtPB.prototype.varint=function(){ let r=0,m=1,x; do{ x=this.b[this.p++]; r+=(x&0x7f)*m; m*=128; }while(x&0x80); return r; };
+MvtPB.prototype.saltar=function(wt){
+  if(wt===0) this.varint(); else if(wt===1) this.p+=8; else if(wt===5) this.p+=4;
+  else if(wt===2){ const l=this.varint(); this.p+=l; } else throw new Error('MVT: tipo '+wt);
+};
+MvtPB.prototype.sub=function(){ const l=this.varint(), s=new MvtPB(this.b,this.p,this.p+l); this.p+=l; return s; };
+MvtPB.prototype.texto=function(){ const l=this.varint(), t=new TextDecoder().decode(this.b.subarray(this.p,this.p+l)); this.p+=l; return t; };
+MvtPB.prototype.empaquetado=function(){ const s=this.sub(), out=[]; while(s.p<s.fin) out.push(s.varint()); return out; };
+function mvtValor(s){
+  let v=null; const dv=new DataView(s.b.buffer,s.b.byteOffset);
+  while(s.p<s.fin){
+    const k=s.varint(), f=k>>3, wt=k&7;
+    if(f===1) v=s.texto();
+    else if(f===2){ v=dv.getFloat32(s.p,true); s.p+=4; }
+    else if(f===3){ v=dv.getFloat64(s.p,true); s.p+=8; }
+    else if(f===4||f===5) v=s.varint();
+    else if(f===6){ const n=s.varint(); v=(n%2)?-(n+1)/2:n/2; }
+    else if(f===7) v=!!s.varint();
+    else s.saltar(wt);
+  }
+  return v;
+}
+const mvtZZ=n=>(n>>>1)^-(n&1);
+function mvtGeom(g){   // devuelve líneas/anillos en coordenadas de la tesela
+  const out=[]; let x=0,y=0,i=0,cur=null;
+  while(i<g.length){
+    const c=g[i++], id=c&7, n=c>>3;
+    if(id===1||id===2){
+      for(let k=0;k<n;k++){ x+=mvtZZ(g[i++]); y+=mvtZZ(g[i++]); if(id===1){ cur=[]; out.push(cur); } cur.push([x,y]); }
+    } else if(id===7){ if(cur&&cur.length) cur.push(cur[0].slice()); }
+    else break;
+  }
+  return out;
+}
+// Lee las capas pedidas de una tesela y pasa las geometrías a lat/lng
+function mvtLeer(buf,capas,tx,ty,z){
+  const s=new MvtPB(buf,0,buf.length), res={}, n=Math.pow(2,z);
+  while(s.p<s.fin){
+    const k=s.varint();
+    if((k>>3)!==3){ s.saltar(k&7); continue; }
+    const L=s.sub(); let nombre='', ext=4096; const claves=[], valores=[], feats=[];
+    while(L.p<L.fin){
+      const kk=L.varint(), f=kk>>3, wt=kk&7;
+      if(f===1) nombre=L.texto();
+      else if(f===2) feats.push(L.sub());
+      else if(f===3) claves.push(L.texto());
+      else if(f===4) valores.push(mvtValor(L.sub()));
+      else if(f===5) ext=L.varint();
+      else L.saltar(wt);
+    }
+    if(!capas.includes(nombre)) continue;
+    const aLL=([px,py])=>{
+      const X=(tx+px/ext)/n, Y=(ty+py/ext)/n;
+      return {lat:mpGrad(Math.atan(Math.sinh(Math.PI*(1-2*Y)))),lng:X*360-180};
+    };
+    res[nombre]=feats.map(F=>{
+      let tags=[], tipo=0, geom=[];
+      while(F.p<F.fin){
+        const kk=F.varint(), f=kk>>3, wt=kk&7;
+        if(f===2) tags=F.empaquetado(); else if(f===3) tipo=F.varint(); else if(f===4) geom=F.empaquetado(); else F.saltar(wt);
+      }
+      const props={}; for(let i=0;i+1<tags.length;i+=2) props[claves[tags[i]]]=valores[tags[i+1]];
+      return {props,tipo,partes:mvtGeom(geom).map(l=>l.map(aLL))};
+    });
+  }
+  return res;
+}
+
+// ── OpenFreeMap ──
+let mpOFMUrl=null;
+async function mpTesela(x,y){
+  const url=mpOFMUrl.replace('{z}',MP_Z).replace('{x}',x).replace('{y}',y);
+  const r=await mpFetchT(url,15000);
+  if(r.status===204||r.status===404) return {};
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  let buf=new Uint8Array(await r.arrayBuffer());
+  if(buf[0]===0x1f&&buf[1]===0x8b)   // por si llega comprimida sin aviso del servidor
+    buf=new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
+  return mvtLeer(buf,['transportation','transportation_name','building','park','landcover'],x,y,MP_Z);
+}
+async function mpZonaOFM(p){
+  if(!mpOFMUrl){
+    const r=await mpFetchT(MP_OFM_TILEJSON,10000);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    mpOFMUrl=j.tiles&&j.tiles[0];
+    if(!mpOFMUrl) throw new Error('respuesta sin teselas');
+  }
+  const n=Math.pow(2,MP_Z);
+  const tx=lng=>Math.floor((lng+180)/360*n);
+  const ty=lat=>{ const r=mpRad(lat); return Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n); };
+  const xa=tx(mpDestino(p,270,MP_RADIO_ZONA).lng), xb=tx(mpDestino(p,90,MP_RADIO_ZONA).lng);
+  const ya=ty(mpDestino(p,0,MP_RADIO_ZONA).lat), yb=ty(mpDestino(p,180,MP_RADIO_ZONA).lat);
+  const pedidos=[];
+  for(let x=xa;x<=xb;x++) for(let y=ya;y<=yb;y++) pedidos.push(mpTesela(x,y));
+  const teselas=await Promise.all(pedidos);
+  const zona={centro:{lat:p.lat,lng:p.lng},fuente:'ofm',vias:[],nombres:[],edif:[],verdes:[]};
+  let id=0;
+  teselas.forEach(t=>{
+    (t.transportation||[]).forEach(f=>{
+      if(f.tipo!==2) return;
+      const pr=f.props, ow=+pr.oneway||0;
+      f.partes.forEach(pts=>{ if(pts.length>1) zona.vias.push({id:'t'+(id++),clase:mpClase(pr.class),nombre:'',ow:ow>0?1:ow<0?-1:0,w:null,pts}); });
+    });
+    (t.transportation_name||[]).forEach(f=>{
+      const nom=f.props.name||f.props['name:latin']||f.props.ref; if(!nom||f.tipo!==2) return;
+      f.partes.forEach(pts=>zona.nombres.push({nombre:nom,pts}));
+    });
+    (t.building||[]).forEach(f=>{ if(f.tipo===3) zona.edif.push(f.partes); });
+    (t.park||[]).forEach(f=>{ if(f.tipo===3) zona.verdes.push(f.partes); });
+    (t.landcover||[]).forEach(f=>{ if(f.tipo===3&&/^(grass|wood)$/.test(f.props.class)) zona.verdes.push(f.partes); });
+  });
+  if(!zona.vias.length) throw new Error('la zona no tiene vías');
+  return zona;
+}
+
+// ── Overpass (respaldo) ──
+// Se prueba un servidor; si falla se pasa al siguiente de inmediato y si tarda más de 5 s se lanza
+// el siguiente en paralelo. Se anota por qué falló cada uno.
+function mpOverpass(q,limite){
+  const orden=MP_OVERPASS.slice().sort((a,b)=>(b===mpOverpass.ultimo)-(a===mpOverpass.ultimo));
+  return new Promise(fin=>{
+    const ctrls=[], timers=[], pendientes=new Set(); let sig=0, fallos=0, listo=false;
+    const host=u=>u.split('/')[2];
+    const terminar=d=>{
+      if(listo) return; listo=true; timers.forEach(clearTimeout);
+      if(!d) pendientes.forEach(u=>mpErrores.push(host(u)+': no respondió a tiempo'));
+      ctrls.forEach(c=>c.abort()); fin(d);
+    };
+    const lanzar=()=>{
+      if(listo||sig>=orden.length) return;
+      const url=orden[sig++], c=new AbortController(); ctrls.push(c); pendientes.add(url);
+      fetch(url,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:c.signal})
+        .then(r=>{
+          if(!r.ok) throw new Error(r.status===429?'HTTP 429, demasiadas consultas seguidas':r.status===504?'HTTP 504, servidor saturado':'HTTP '+r.status);
+          return r.json();
+        })
+        .then(d=>{ pendientes.delete(url); mpOverpass.ultimo=url; terminar(d); })
+        .catch(e=>{
+          pendientes.delete(url); if(listo) return;
+          mpErrores.push(host(url)+': '+mpMotivo(e));
+          if(++fallos>=orden.length) terminar(null); else lanzar();
+        });
+    };
+    lanzar();
+    for(let i=1;i<orden.length;i++) timers.push(setTimeout(lanzar,i*5000));
+    timers.push(setTimeout(()=>terminar(null),limite||30000));
+  });
+}
+async function mpZonaOverpass(p){
+  const a=`(around:${MP_RADIO_ZONA},${p.lat},${p.lng})`;
+  const d=await mpOverpass(`[out:json][timeout:25];way${a}[highway];out geom;`,30000);
+  if(!d) return null;
+  const vias=(d.elements||[]).filter(w=>w.type==='way'&&w.geometry&&w.tags&&w.tags.highway).map(w=>{
+    const t=w.tags, ow=String(t.oneway||'');
+    let wd=parseFloat(t.width); if(!(wd>2)) wd=t.lanes?parseFloat(t.lanes)*3.3:null;
+    return {id:'w'+w.id,clase:mpClase(t.highway),nombre:t.name||t.ref||'',ow:(ow==='yes'||ow==='1')?1:ow==='-1'?-1:0,w:wd,
+            pts:w.geometry.map(g=>({lat:g.lat,lng:g.lon}))};
+  });
+  return {centro:{lat:p.lat,lng:p.lng},fuente:'overpass',vias,nombres:[],edif:[],verdes:[]};
+}
+
+let mpZona=null;
+async function mpDatosZona(p){
+  if(mpZona&&mpDist(mpZona.centro,p)<MP_RADIO_ZONA-180) return mpZona;
+  mpErrores=[];
+  let zona=null;
+  try{ zona=await mpZonaOFM(p); }
+  catch(e){ mpErrores.push('OpenFreeMap: '+mpMotivo(e)); console.warn('OpenFreeMap',e); }
+  if(!zona){
+    mpEstado('OpenFreeMap no respondió, probando con Overpass…');
+    zona=await mpZonaOverpass(p);
+  }
+  if(zona) mpZona=zona;
+  return zona;
+}
+function mpDetalleError(){ return mpErrores.length?' Detalle: '+mpErrores.join('; ')+'.':''; }
+function mpOcupado(on,txt){
+  mpBusy=on;
+  ['mp-btn-generar','mp-btn-fondo'].forEach(id=>{ const b=document.getElementById(id); if(b&&on) b.disabled=true; });
+  if(!on) mpActualizarBotones();
+  if(txt) mpEstado(txt);
+  const m=document.getElementById('mapa-modal'); if(m) m.style.cursor=on?'progress':'';
+}
+
+async function mpDetectar(){
+  if(!mpCentro||mpBusy) return;
+  const enCache=mpZona&&mpDist(mpZona.centro,mpCentro)<MP_RADIO_ZONA-180;
+  mpOcupado(true,enCache?'Buscando el cruce…':'Leyendo vías de OpenStreetMap…');
+  const t0=Date.now();
+  const reloj=enCache?null:setInterval(()=>{ const s=Math.round((Date.now()-t0)/1000); if(s>=3) mpEstado(`Leyendo vías de OpenStreetMap… ${s} s`); },1000);
+  const zona=await mpDatosZona(mpCentro);
+  if(reloj) clearInterval(reloj);
+  mpOcupado(false);
+  if(!zona){ mpEstado('No se pudieron leer las vías de OSM. Puedes agregar los brazos a mano con “Agregar brazo” o intentar “Detectar de nuevo”.'+mpDetalleError(), true); mpPiernas=[]; mpDibujarPiernas(); mpRenderLista(); return; }
+  const res=mpBrazosGeom(zona,mpCentro);
+  if(!res){ mpEstado('No hay vías de OSM en ese punto. Haz clic más cerca del cruce o agrega los brazos a mano.', true); mpPiernas=[]; mpDibujarPiernas(); mpRenderLista(); return; }
+  mpFijarCentro(res.centro);
+  mpPiernas=res.piernas;
+  mpAsignar(); mpDibujarPiernas(); mpRenderLista();
+  const sin=mpPiernas.filter(p=>!p.acc).length;
+  mpEstado(`Se detectaron ${mpPiernas.length} brazos.`+(sin?` ${sin} quedaron sin acceso asignado: revísalos en la lista.`:' Revisa que cada uno tenga el acceso correcto.'));
+}
+
+// ── Detección geométrica del cruce ──
+// Las teselas no traen nodos compartidos, así que el cruce se busca por geometría: puntos donde
+// dos vías se cortan o donde una termina sobre otra. Los puntos cercanos (menos de 22 m) se toman
+// como un solo cruce, así una avenida con separador cuenta como un solo brazo por lado.
+function mpBrazosGeom(zona,clic){
+  const kx=111320*Math.cos(mpRad(clic.lat)), ky=110540;
+  const aXY=p=>({x:(p.lng-clic.lng)*kx,y:(p.lat-clic.lat)*ky});
+  const aLL=q=>({lat:clic.lat+q.y/ky,lng:clic.lng+q.x/kx});
+  const d2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const R=90;
+  const lineas=zona.vias.filter(v=>MP_VEH.test(v.clase)).map(v=>{
+    const p=v.pts.map(aXY), ac=[0];
+    for(let i=1;i<p.length;i++) ac.push(ac[i-1]+d2(p[i-1],p[i]));
+    return {v,p,ac};
+  }).filter(o=>o.p.some((q,i)=>i&&mpDistSeg({x:0,y:0},o.p[i-1],q).d<R));
+  if(!lineas.length) return null;
+  const proy=(o,q)=>{ let mejor={d:1e9,s:0}; for(let i=1;i<o.p.length;i++){ const r=mpDistSeg(q,o.p[i-1],o.p[i]); if(r.d<mejor.d) mejor={d:r.d,s:o.ac[i-1]+r.t*(o.ac[i]-o.ac[i-1])}; } return mejor; };
+  const enS=(o,s)=>{ s=Math.max(0,Math.min(o.ac[o.ac.length-1],s)); for(let i=1;i<o.p.length;i++) if(o.ac[i]>=s){ const t=(s-o.ac[i-1])/((o.ac[i]-o.ac[i-1])||1); return {x:o.p[i-1].x+(o.p[i].x-o.p[i-1].x)*t,y:o.p[i-1].y+(o.p[i].y-o.p[i-1].y)*t}; } return o.p[o.p.length-1]; };
+
+  // candidatos: cortes entre vías y extremos que tocan otra vía
+  const cand=[];
+  for(let a=0;a<lineas.length;a++) for(let b=a+1;b<lineas.length;b++){
+    const A=lineas[a], B=lineas[b];
+    for(let i=1;i<A.p.length;i++) for(let j=1;j<B.p.length;j++){
+      const q=mpCorte(A.p[i-1],A.p[i],B.p[j-1],B.p[j]);
+      if(q&&Math.hypot(q.x,q.y)<R) cand.push(q);
+    }
+  }
+  lineas.forEach((A,a)=>[A.p[0],A.p[A.p.length-1]].forEach(e=>{
+    if(Math.hypot(e.x,e.y)>=R) return;
+    lineas.forEach((B,b)=>{ if(a!==b&&proy(B,e).d<3) cand.push(e); });
+  }));
+  if(!cand.length){   // sin cruce: se toma el punto más cercano de la vía más cercana
+    let m=null; lineas.forEach(o=>{ const r=proy(o,{x:0,y:0}); if(!m||r.d<m.d) m={d:r.d,q:enS(o,r.s)}; });
+    if(!m||m.d>40) return null;
+    cand.push(m.q);
+  }
+  cand.sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));
+
+  const brazosEn=c=>{
+    const grupo=cand.filter(q=>d2(q,c)<22);
+    const cen={x:grupo.reduce((t,q)=>t+q.x,0)/grupo.length,y:grupo.reduce((t,q)=>t+q.y,0)/grupo.length};
+    const brazos=[];
+    lineas.forEach(o=>{
+      const ss=grupo.map(q=>proy(o,q)).filter(r=>r.d<3).map(r=>r.s);
+      if(!ss.length&&proy(o,cen).d>3) return;
+      if(!ss.length) ss.push(proy(o,cen).s);
+      const sMin=Math.min(...ss), sMax=Math.max(...ss), tot=o.ac[o.ac.length-1];
+      [[-1,sMin,sMin],[1,sMax,tot-sMax]].forEach(([paso,s0,disp])=>{
+        if(disp<6) return;
+        const p0=enS(o,s0), p1=enS(o,s0+paso*Math.min(35,disp));
+        const rumbo=(mpGrad(Math.atan2(p1.x-p0.x,p1.y-p0.y))+360)%360;
+        let sentido='';
+        if(o.v.ow) sentido=((paso===1)===(o.v.ow===1))?'solo salida':'solo entrada';
+        brazos.push({rumbo,nombre:o.v.nombre||'',tipo:o.v.clase,ancho:Math.round(mpAnchoVia(o.v)*10)/10,acc:null,sentido,vias:[o.v.id],_p0:p0});
+      });
+    });
+    // brazos casi paralelos son el mismo (avenida con separador o vía partida en tramos)
+    const res=[];
+    brazos.sort((a,b)=>(b.nombre?1:0)-(a.nombre?1:0)).forEach(b=>{
+      const igual=res.find(p=>mpDifAng(p.rumbo,b.rumbo)<22);
+      if(igual){
+        if(!igual.nombre&&b.nombre) igual.nombre=b.nombre;
+        if(igual.sentido&&b.sentido&&igual.sentido!==b.sentido&&!igual.doble){
+          // dos calzadas de sentido contrario: avenida con separador. El ancho del brazo abarca
+          // ambas calzadas y el separador, para repartir bien las flechas de entrada y salida.
+          const t=mpRad(igual.rumbo), dx=b._p0.x-igual._p0.x, dy=b._p0.y-igual._p0.y;
+          const sep=Math.abs(dx*Math.cos(t)-dy*Math.sin(t));
+          igual.ancho=Math.round((sep+(igual.ancho+b.ancho)/2)*10)/10; igual.doble=true;
+        } else if(!igual.doble) igual.ancho=Math.max(igual.ancho,b.ancho);
+        if(igual.sentido!==b.sentido) igual.sentido='';
+        igual.vias=igual.vias.concat(b.vias);
+      } else res.push(b);
+    });
+    res.forEach(b=>delete b._p0);
+    return {cen,res};
+  };
+  let elegido=null;
+  for(const c of cand.slice(0,20)){
+    const r=brazosEn(c);
+    if(!elegido||r.res.length>elegido.res.length) elegido=r;
+    if(r.res.length>=3) break;
+  }
+  // nombres: con OpenFreeMap vienen en otra capa; se busca la línea con nombre paralela a cada brazo
+  const nombres=zona.nombres.map(n=>({nombre:n.nombre,p:n.pts.map(aXY)}));
+  elegido.res.forEach(b=>{
+    if(b.nombre||!nombres.length) return;
+    const t=mpRad(b.rumbo), m={x:elegido.cen.x+Math.sin(t)*20,y:elegido.cen.y+Math.cos(t)*20};
+    let mejor=null;
+    nombres.forEach(n=>{ for(let i=1;i<n.p.length;i++){
+      const r=mpDistSeg(m,n.p[i-1],n.p[i]); if(r.d>15) continue;
+      const rs=(mpGrad(Math.atan2(n.p[i].x-n.p[i-1].x,n.p[i].y-n.p[i-1].y))+360)%360, dif=mpDifAng(rs,b.rumbo);
+      if((dif<35||dif>145)&&(!mejor||r.d<mejor.d)) mejor={d:r.d,nombre:n.nombre};
+    }});
+    if(mejor) b.nombre=mejor.nombre;
+  });
+  elegido.res.sort((a,b)=>a.rumbo-b.rumbo);
+  return {centro:aLL(elegido.cen),piernas:elegido.res};
+}
+// distancia de un punto a un segmento (t: posición 0-1 sobre el segmento)
+function mpDistSeg(q,a,b){
+  const dx=b.x-a.x, dy=b.y-a.y, l=dx*dx+dy*dy;
+  let t=l?((q.x-a.x)*dx+(q.y-a.y)*dy)/l:0; t=Math.max(0,Math.min(1,t));
+  return {d:Math.hypot(q.x-(a.x+t*dx),q.y-(a.y+t*dy)),t};
+}
+// punto de corte de dos segmentos, o null
+function mpCorte(a,b,c,d){
+  const r={x:b.x-a.x,y:b.y-a.y}, s={x:d.x-c.x,y:d.y-c.y}, den=r.x*s.y-r.y*s.x;
+  if(Math.abs(den)<1e-9) return null;
+  const t=((c.x-a.x)*s.y-(c.y-a.y)*s.x)/den, u=((c.x-a.x)*r.y-(c.y-a.y)*r.x)/den;
+  if(t<-1e-6||t>1+1e-6||u<-1e-6||u>1+1e-6) return null;
+  return {x:a.x+t*r.x,y:a.y+t*r.y};
+}
+
+// Asigna cada brazo al acceso activo más parecido según su rumbo (N 0°, E 90°, S 180°, O 270°)
+function mpAsignar(){
+  const ids=S.accesos.filter(a=>a.activo).map(a=>a.id);
+  const fijos=new Set(mpPiernas.filter(p=>p.fijo&&p.acc).map(p=>p.acc));
+  const libres=mpPiernas.filter(p=>!(p.fijo&&p.acc));
+  const op=ids.filter(id=>!fijos.has(id));
+  let mejor=null, costoMejor=1e9;
+  const costo=(p,id)=>id==null?100:(id in MP_CARDINAL?(mpDifAng(p.rumbo,MP_CARDINAL[id])<=70?mpDifAng(p.rumbo,MP_CARDINAL[id]):1e6):60);
+  (function rec(i,usados,asig,c){
+    if(c>=costoMejor) return;
+    if(i===libres.length){ costoMejor=c; mejor=asig.slice(); return; }
+    rec(i+1,usados,asig.concat([null]),c+costo(libres[i],null));
+    op.forEach(id=>{ if(usados.has(id)) return; usados.add(id); rec(i+1,usados,asig.concat([id]),c+costo(libres[i],id)); usados.delete(id); });
+  })(0,new Set(),[],0);
+  if(mejor) libres.forEach((p,i)=>p.acc=mejor[i]);
+}
+
+function mpColorAcc(id){
+  const act=S.accesos.filter(a=>a.activo), i=act.findIndex(a=>a.id===id);
+  return i>=0?ED_ACC_COLORS[i%6]:'#80868b';
+}
+function mpDibujarPiernas(soloLineas){
+  if(!mpCapaPiernas) return;
+  mpCapaPiernas.clearLayers();
+  if(!mpCentro) return;
+  mpPiernas.forEach((p,i)=>{
+    const fin=mpDestino(mpCentro,p.rumbo,MP_LARGO_BRAZO), col=mpColorAcc(p.acc);
+    L.polyline([[mpCentro.lat,mpCentro.lng],[fin.lat,fin.lng]],{color:col,weight:6,opacity:.9}).addTo(mpCapaPiernas);
+    const acc=S.accesos.find(a=>a.id===p.acc);
+    const mk=L.marker([fin.lat,fin.lng],{draggable:true,icon:L.divIcon({className:'mp-fin',html:`<span style="background:${col}">${acc?mpEsc(acc.id):'?'}</span>`,iconSize:[26,26]})}).addTo(mpCapaPiernas);
+    mk.on('drag',ev=>{ p.rumbo=mpRumbo(mpCentro,ev.latlng); });
+    mk.on('dragend',()=>{ mpDibujarPiernas(); mpRenderLista(); });
+  });
+}
+function mpRenderLista(){
+  const el=document.getElementById('mp-lista'); if(!el) return;
+  if(!mpPiernas.length){ el.innerHTML='<div class="mp-vacio">Sin brazos todavía.</div>'; mpActualizarBotones(); return; }
+  const act=S.accesos.filter(a=>a.activo);
+  el.innerHTML=mpPiernas.map((p,i)=>`
+    <div class="mp-pierna">
+      <span class="mp-dot" style="background:${mpColorAcc(p.acc)}"></span>
+      <div class="mp-pierna-info">
+        <div class="mp-pierna-nom">${mpEsc(p.nombre||'Vía sin nombre')}</div>
+        <div class="mp-pierna-sub">Rumbo ${Math.round(p.rumbo)}°${p.doble?', con separador':''}${p.sentido?', '+p.sentido:''}</div>
+      </div>
+      <select onchange="mpCambiarAcc(${i},this.value)" title="Acceso">
+        <option value="">Sin acceso</option>
+        ${act.map(a=>`<option value="${a.id}" ${p.acc===a.id?'selected':''}>${mpEsc(a.label)}</option>`).join('')}
+      </select>
+      <input type="number" min="3" max="60" step="0.5" value="${p.ancho}" title="Ancho de calzada (m)" onchange="mpPiernas[${i}].ancho=Math.max(3,parseFloat(this.value)||7)">
+      <button class="mp-x" onclick="mpQuitar(${i})" title="Quitar brazo"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+  mpActualizarBotones();
+}
+function mpCambiarAcc(i,id){
+  id=id||null;
+  mpPiernas.forEach((p,j)=>{ if(j!==i&&id&&p.acc===id){ p.acc=null; p.fijo=false; } });
+  mpPiernas[i].acc=id; mpPiernas[i].fijo=!!id;
+  mpDibujarPiernas(); mpRenderLista();
+}
+function mpQuitar(i){ mpPiernas.splice(i,1); mpDibujarPiernas(); mpRenderLista(); }
+function mpAgregarBrazo(){
+  if(!mpCentro){ mpEstado('Primero haz clic en el cruce.', true); return; }
+  mpModoAgregar=!mpModoAgregar;
+  document.getElementById('mp-btn-agregar').classList.toggle('activo',mpModoAgregar);
+  if(mpModoAgregar) mpEstado('Haz clic sobre la vía, unos metros fuera del cruce, para agregar el brazo.');
+}
+function mpActualizarBotones(){
+  const ok=!!mpCentro&&mpPiernas.some(p=>p.acc);
+  const b=document.getElementById('mp-btn-generar'); if(b) b.disabled=!ok;
+  const f=document.getElementById('mp-btn-fondo'); if(f) f.disabled=!mpCentro;
+}
+
+// ── Captura del mapa como imagen, centrada en el cruce ──
+function mpCargarTile(url){
+  return new Promise(ok=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>ok(im); im.onerror=()=>ok(null); im.src=url; });
+}
+async function mpCapturar(){
+  // Imagen fija de MP_W×MP_H px centrada en el cruce. zt es el zoom "virtual" de la imagen;
+  // si el proveedor no tiene tiles a ese zoom, se usan los del máximo disponible ampliados.
+  const clave=document.getElementById('mp-fondo').value, f=MP_FONDOS[clave]||MP_FONDOS.esquema;
+  const zt=parseFloat(document.getElementById('mp-encuadre').value)||21;   // puede ser fraccionario (21.5)
+  if(f.vector) return mpCapturarEsquema(zt,clave,f);
+  const zc=Math.min(Math.floor(zt),f.max), esc=Math.pow(2,zt-zc), T=256*esc;
+  const W=MP_W, H=MP_H;
+  const c0=mpMapa.project([mpCentro.lat,mpCentro.lng],zt);
+  const ox=Math.round(c0.x-W/2), oy=Math.round(c0.y-H/2);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.fillStyle='#e8eaed'; ctx.fillRect(0,0,W,H);
+  ctx.imageSmoothingQuality='high';
+  const n=Math.pow(2,zc), trabajos=[];
+  for(let tx=Math.floor(ox/T);tx<=Math.floor((ox+W)/T);tx++){
+    for(let ty=Math.floor(oy/T);ty<=Math.floor((oy+H)/T);ty++){
+      if(ty<0||ty>=n) continue;
+      const x=((tx%n)+n)%n;
+      const url=f.url.replace('{z}',zc).replace('{x}',x).replace('{y}',ty);
+      trabajos.push(mpCargarTile(url).then(im=>{ if(im) ctx.drawImage(im,tx*T-ox,ty*T-oy,T,T); return !!im; }));
+    }
+  }
+  const res=await Promise.all(trabajos);
+  const okN=res.filter(Boolean).length;
+  if(!okN) throw new Error('No se pudo descargar ninguna parte del mapa (sin conexión o el servidor no lo permite).');
+  // atribución, obligatoria para usar estos mapas
+  ctx.font='12px Arial,sans-serif';
+  const tw=ctx.measureText(f.attr).width;
+  ctx.fillStyle='rgba(255,255,255,.8)'; ctx.fillRect(W-tw-12,H-20,tw+12,20);
+  ctx.fillStyle='#333'; ctx.fillText(f.attr,W-tw-6,H-6);
+  let img;
+  try{ img=cv.toDataURL('image/jpeg',0.88); }
+  catch(e){ throw new Error('El navegador bloqueó la captura del mapa. Prueba con otro fondo.'); }
+  // geometría en píxeles de la imagen, para el generador
+  const mpp=40075016.686*Math.cos(mpRad(mpCentro.lat))/(256*Math.pow(2,zt));
+  const accesos={};
+  mpPiernas.filter(p=>p.acc).forEach(p=>{
+    const fin=mpDestino(mpCentro,p.rumbo,MP_LARGO_BRAZO), q=mpMapa.project([fin.lat,fin.lng],zt);
+    accesos[p.acc]={ang:Math.round(mpGrad(Math.atan2(q.y-c0.y,q.x-c0.x))*10)/10, hw:Math.round(p.ancho/2/mpp*10)/10};
+  });
+  return {img,W,H,zc:zt,clave,parcial:okN<res.length,px:{cx:c0.x-ox,cy:c0.y-oy,accesos}};
+}
+
+// ── Esquema vial: vías y edificaciones de OSM dibujadas a escala ──
+async function mpCapturarEsquema(zt,clave,f){
+  const W=MP_W, H=MP_H;
+  const c0=mpMapa.project([mpCentro.lat,mpCentro.lng],zt);
+  const ox=c0.x-W/2, oy=c0.y-H/2;
+  const mpp=40075016.686*Math.cos(mpRad(mpCentro.lat))/(256*Math.pow(2,zt));
+  mpEstado('Dibujando el esquema vial…');
+  const zona=await mpDatosZona(mpCentro);
+  if(!zona) throw new Error('No se pudieron leer las vías de OSM para dibujar el esquema. Prueba de nuevo o usa el mapa OpenStreetMap.'+mpDetalleError());
+  if(zona.fuente==='overpass') mpEstado('OpenFreeMap no respondió: el esquema sale solo con las vías, sin edificaciones.');
+  const P=g=>{ const q=mpMapa.project([g.lat,g.lng],zt); return [q.x-ox,q.y-oy]; };
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#ecebe6'; ctx.fillRect(0,0,W,H);
+  const trazo=pts=>pts.forEach((g,i)=>{ const [x,y]=P(g); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  const poli=(anillos,fill,stroke)=>{
+    ctx.beginPath(); anillos.forEach(a=>{ trazo(a); ctx.closePath(); });
+    ctx.fillStyle=fill; ctx.fill('evenodd'); if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.stroke(); }
+  };
+  zona.verdes.forEach(a=>poli(a,'#d6e5c9'));
+  zona.edif.forEach(a=>poli(a,'#d9d3cc','#c5bdb4'));
+  // ancho de cada vía: el que se fijó en el brazo, si la vía pertenece a uno; si no, el estimado
+  const anchoBrazo={};
+  // (en avenidas con separador el ancho del brazo abarca ambas calzadas, así que cada calzada usa su estimado)
+  mpPiernas.forEach(p=>{ if(!p.doble) (p.vias||[]).forEach(id=>anchoBrazo[id]=p.ancho); });
+  const vias=zona.vias.filter(v=>MP_DIBUJO.test(v.clase));
+  const anchoPx=v=>Math.max(2,(anchoBrazo[v.id]||mpAnchoVia(v))/mpp);
+  const linea=v=>{ ctx.beginPath(); trazo(v.pts); };
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  // veredas y senderos, finos y por debajo
+  vias.filter(v=>v.clase==='path').forEach(v=>{ linea(v); ctx.strokeStyle='#ffffff'; ctx.lineWidth=Math.max(2,anchoPx(v)); ctx.stroke(); });
+  const veh=vias.filter(v=>v.clase!=='path');
+  // borde de calzada primero y relleno después, para que las intersecciones se unan limpias
+  veh.forEach(v=>{ linea(v); ctx.strokeStyle='#8f949a'; ctx.lineWidth=anchoPx(v)+Math.max(3,0.5/mpp); ctx.stroke(); });
+  veh.forEach(v=>{ linea(v); ctx.strokeStyle='#ffffff'; ctx.lineWidth=anchoPx(v); ctx.stroke(); });
+  // eje discontinuo en vías de doble sentido con calzada suficiente
+  ctx.setLineDash([3/mpp,3/mpp]);   // eje de 3 m de trazo
+  veh.forEach(v=>{ if(v.ow||mpAnchoVia(v)<6) return; linea(v); ctx.strokeStyle='#c3c6ca'; ctx.lineWidth=Math.max(1.5,0.15/mpp); ctx.stroke(); });
+  ctx.setLineDash([]);
+  const attr=zona.fuente==='ofm'?'© OpenMapTiles © OpenStreetMap contributors · OpenFreeMap':'© OpenStreetMap contributors';
+  ctx.font='12px Arial,sans-serif';
+  const tw=ctx.measureText(attr).width;
+  ctx.fillStyle='rgba(255,255,255,.85)'; ctx.fillRect(W-tw-12,H-20,tw+12,20);
+  ctx.fillStyle='#333'; ctx.fillText(attr,W-tw-6,H-6);
+  const png=cv.toDataURL('image/png'), jpg=cv.toDataURL('image/jpeg',0.9);
+  const img=png.length<jpg.length?png:jpg;   // el esquema tiene colores planos: casi siempre gana PNG
+  const accesos={};
+  mpPiernas.filter(p=>p.acc).forEach(p=>{
+    const fin=mpDestino(mpCentro,p.rumbo,MP_LARGO_BRAZO), q=mpMapa.project([fin.lat,fin.lng],zt);
+    accesos[p.acc]={ang:Math.round(mpGrad(Math.atan2(q.y-c0.y,q.x-c0.x))*10)/10, hw:Math.round(p.ancho/2/mpp*10)/10};
+  });
+  return {img,W,H,zc:zt,clave,parcial:false,px:{cx:c0.x-ox,cy:c0.y-oy,accesos}};
+}
+
+async function mpUsarFondo(generar){
+  if(!mpCentro||mpBusy) return;
+  mpOcupado(true,'Preparando el fondo…');
+  let cap;
+  try{ cap=await mpCapturar(); }
+  catch(e){ mpOcupado(false); mpEstado(e.message,true); return; }
+  mpOcupado(false);
+  edState.bgImage=cap.img;
+  edBgImg=new Image();
+  edBgImg.onload=()=>{ if(edInited) edAjustarVista(); };
+  edBgImg.src=cap.img;
+  S.flujoGeo={
+    lat:mpCentro.lat, lon:mpCentro.lng, base:cap.clave, zoom:cap.zc, W:cap.W, H:cap.H,
+    piernas:mpPiernas.map(p=>({rumbo:Math.round(p.rumbo*10)/10,nombre:p.nombre,ancho:p.ancho,acc:p.acc,sentido:p.sentido||'',fijo:!!p.fijo,vias:p.vias||[],doble:!!p.doble})),
+    px:cap.px, firma:edFirmaFondo(cap.img)
+  };
+  // completar el nombre de vía de los accesos que no lo tienen
+  let completadas=0;
+  mpPiernas.forEach(p=>{ const a=S.accesos.find(x=>x.id===p.acc); if(a&&!a.via&&p.nombre){ a.via=p.nombre; completadas++; } });
+  if(completadas){ renderAccesos(); populateAccesoSel(); }
+  markDirty();
+  mpCerrar();
+  showPage('editor');
+  if(generar){
+    await new Promise(r=>{ if(edBgImg.complete) r(); else edBgImg.addEventListener('load',r,{once:true}); });
+    edGenerarFlujograma(S.flujoGeo.px,{reemplazar:true,norte:true});
+  } else {
+    edSaveStorage();
+    notify('<i class="fa-solid fa-check"></i> Fondo del mapa listo'+(cap.parcial?' (algunas partes no cargaron)':''));
+  }
+}
+
+// ── A qué brazo sale cada movimiento ──
+// Con la geometría del mapa se calcula por ángulos (sirve para cruces irregulares).
+// Sin ella se usa la convención de accesos cardinales (llegando desde el N, la izquierda es el E).
+const ED_DESTINO_CARD={N:{0:'N',1:'E',2:'S',3:'O'},S:{0:'S',1:'O',2:'N',3:'E'},E:{0:'E',1:'S',2:'O',3:'N'},O:{0:'O',1:'N',2:'E',3:'S'}};
+function edDestinoGeo(geo,id,tipo){
+  if(tipo===0) return id;
+  const ids=S.accesos.filter(a=>a.activo&&geo.accesos[a.id]).map(a=>a.id);
+  const vec=k=>{ const t=geo.accesos[k].ang*Math.PI/180; return {x:Math.cos(t),y:Math.sin(t)}; };
+  const u0=vec(id), d={x:-u0.x,y:-u0.y};
+  const op=ids.filter(j=>j!==id).map(j=>{ const u=vec(j); return {j,ang:Math.atan2(d.x*u.y-d.y*u.x,d.x*u.x+d.y*u.y)*180/Math.PI}; }); // + = derecha
+  if(tipo===2){ const o=op.filter(o=>Math.abs(o.ang)<50).sort((a,b)=>Math.abs(a.ang)-Math.abs(b.ang)); return o[0]?o[0].j:null; }
+  if(tipo===1){ const o=op.filter(o=>o.ang<=-50).sort((a,b)=>Math.abs(a.ang+90)-Math.abs(b.ang+90)); return o[0]?o[0].j:null; }
+  if(tipo===3){ const o=op.filter(o=>o.ang>=50).sort((a,b)=>Math.abs(a.ang-90)-Math.abs(b.ang-90)); return o[0]?o[0].j:null; }
+  return null;
+}
+function edDestinoMov(m){
+  m=parseInt(m);
+  const a=S.accesos.find(a=>a.activo&&a.movs.includes(m)); if(!a) return null;
+  const tipo=m-a.base; if(tipo<0||tipo>3) return null;
+  const g=S.flujoGeo&&S.flujoGeo.px;
+  if(g&&g.accesos&&g.accesos[a.id]){ const d=edDestinoGeo(g,a.id,tipo); if(d) return d; }
+  const d=ED_DESTINO_CARD[a.id]&&ED_DESTINO_CARD[a.id][tipo];
+  return d&&S.accesos.some(x=>x.activo&&x.id===d)?d:null;
+}
+// Vehículos que salen por un acceso en la hora punta del turno t
+function edTotalSalida(accId,t){
+  let tot=0;
+  S.accesos.filter(a=>a.activo).forEach(a=>a.movs.forEach(m=>{ if(edDestinoMov(m)===accId) tot+=getMovTotalForFlujo(m,t)||0; }));
+  return tot;
+}
+
+// ── Firma corta del fondo, para saber si sigue siendo el capturado del mapa ──
+function edFirmaFondo(src){ return src?src.length+':'+src.slice(-32):''; }
+
+// ── Botón del editor ──
+function edGenerarDesdeGeo(){
+  const g=S.flujoGeo;
+  if(!g||!g.px){ notify('Para generar, elige primero el fondo desde el mapa.',4500); mpAbrir(); return; }
+  if(g.firma!==edFirmaFondo(edState.bgImage)){
+    notify('El fondo actual no viene del mapa. Captúralo de nuevo para generar.',4500); mpAbrir(); return;
+  }
+  edGenerarFlujograma(g.px,{reemplazar:false,norte:true});
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GENERADOR DEL FLUJOGRAMA
+//  geo = { cx, cy, accesos:{ N:{ang,hw}, ... } } en px de la imagen de fondo
+//    ang: rumbo del brazo hacia afuera en grados de pantalla (0 = derecha, 90 = abajo)
+//    hw : media calzada en px
+// ══════════════════════════════════════════════════════════════
+function edGenerarFlujograma(geo,opc){
+  opc=opc||{};
+  if(!S.hpGlobal||!S.hp){ notify('Falta calcular la hora punta (botón Calcular HP).',4500); return 0; }
+  if(!opc.reemplazar && edState.elements.length &&
+     !confirm('El editor ya tiene un dibujo. ¿Reemplazarlo por el flujograma automático? Puedes deshacer con Ctrl+Z.')) return 0;
+  const W=edBgImg.naturalWidth||1200, H=edBgImg.naturalHeight||900;
+  // escala de las medidas (separaciones, textos, flechas) según el tamaño de la imagen: base 1200×900
+  const E=Math.max(1,Math.min(W/1200,H/900)), fs=n=>Math.round(n*E);
+  const C={x:geo.cx,y:geo.cy};
+  const add=(p,v,k)=>({x:p.x+v.x*k,y:p.y+v.y*k});
+  const der=v=>({x:-v.y,y:v.x});                // a la derecha del sentido v (eje y hacia abajo)
+  const r1=n=>Math.round(n*10)/10;
+  const dentro=(p,m)=>({x:Math.min(W-m,Math.max(m,p.x)),y:Math.min(H-m,Math.max(m,p.y))});
+  const accs=S.accesos.filter(a=>a.activo&&geo.accesos[a.id]);
+  if(!accs.length){ notify('No hay accesos activos con brazo asignado.'); return 0; }
+  const L={};
+  accs.forEach(a=>{
+    const g=geo.accesos[a.id], t=g.ang*Math.PI/180;
+    const u={x:Math.cos(t),y:Math.sin(t)};
+    let far=1e9;   // largo disponible hasta el borde de la imagen
+    if(u.x>1e-6) far=Math.min(far,(W-C.x)/u.x); if(u.x<-1e-6) far=Math.min(far,-C.x/u.x);
+    if(u.y>1e-6) far=Math.min(far,(H-C.y)/u.y); if(u.y<-1e-6) far=Math.min(far,-C.y/u.y);
+    // hw mínimo de 28 px solo para repartir carriles: con vías angostas las flechas quedarían encimadas
+    L[a.id]={a,u,hw:Math.max(28*E,g.hw),far:Math.min(far-35*E,360*E)};
+  });
+  const ids=Object.keys(L);
+  ids.forEach(id=>{ L[id].rs=Math.max(45*E,(ids.length>1?Math.max(...ids.filter(j=>j!==id).map(j=>L[j].hw)):L[id].hw)+10*E); });
+
+  const destino=(id,tipo)=>edDestinoGeo(geo,id,tipo);
+  const FR={0:0.15,1:0.38,2:0.62,3:0.86};   // posición del carril: U al centro, derecha junto a la vereda
+
+  const movs=[], sinDestino=[];
+  accs.forEach(a=>a.movs.forEach(m=>{
+    const tipo=m-a.base, dst=(tipo>=0&&tipo<=3)?destino(a.id,tipo):null;
+    if(dst==null){ sinDestino.push(m); return; }
+    movs.push({code:String(m),ori:a.id,dst,tipo,vol:edGetHPVal(String(m))});
+  }));
+  const vmax=Math.max(1,...movs.map(m=>m.vol));
+  const ancho=()=>5;   // grosor uniforme; el ancho de calzada solo separa los carriles
+
+  const els=[]; let id=edState.nextId||1000;
+  const push=e=>{ e.id=id++; els.push(e); };
+  const rot=u=>{ let g=Math.atan2(u.y,u.x)*180/Math.PI; if(g>90) g-=180; if(g<=-90) g+=180; return Math.round(g); };
+
+  movs.forEach(m=>{
+    const o=L[m.ori], s=L[m.dst], d={x:-o.u.x,y:-o.u.y};
+    const offIn=o.hw*FR[m.tipo], offOut=s.hw*FR[m.tipo];
+    const ini=add(add(C,o.u,o.rs+70*E),der(d),offIn);
+    const ent=add(add(C,o.u,o.rs),der(d),offIn);
+    const sal=add(add(C,s.u,s.rs),der(s.u),offOut);
+    const fin=add(add(C,s.u,Math.max(s.rs+40*E,Math.min(s.rs+120*E,s.far-40*E))),der(s.u),offOut);
+    const color=edGetMovColor(m.code), w=ancho(m.vol), as=Math.round(9*E+w*1.6);
+    if(m.tipo===2) push({type:'arrow',x1:r1(ini.x),y1:r1(ini.y),x2:r1(fin.x),y2:r1(fin.y),color,width:w,as});
+    else if(m.tipo===0){
+      const c1=add(add(C,o.u,o.rs*0.15),der(d),offIn), c2=add(add(C,s.u,s.rs*0.15),der(s.u),offOut);
+      push({type:'curve',x1:r1(ini.x),y1:r1(ini.y),cx1:r1(c1.x),cy1:r1(c1.y),cx2:r1(c2.x),cy2:r1(c2.y),x2:r1(fin.x),y2:r1(fin.y),color,width:w,as});
+    } else push({type:'curve',x1:r1(ini.x),y1:r1(ini.y),cx1:r1(ent.x),cy1:r1(ent.y),cx2:r1(sal.x),cy2:r1(sal.y),x2:r1(fin.x),y2:r1(fin.y),color,width:w,as});
+  });
+
+  // tramo de llegada de cada acceso y su total
+  accs.forEach(a=>{
+    const o=L[a.id], d={x:-o.u.x,y:-o.u.y}, col=edGetMovColor('TOT_'+a.id);
+    const p1=add(add(C,o.u,o.far-20),der(d),o.hw*0.5), p2=add(add(C,o.u,o.rs+70*E),der(d),o.hw*0.5);
+    if(o.far-20>o.rs+75*E) push({type:'line',x1:r1(p1.x),y1:r1(p1.y),x2:r1(p2.x),y2:r1(p2.y),color:col,width:5});
+    const pt=dentro(add(add(C,o.u,o.far-2),der(d),o.hw*0.5+50*E),55*E);
+    push({type:'hpval',x:r1(pt.x),y:r1(pt.y),movCode:'TOT_'+a.id,movLabel:edGetMovLabel('TOT_'+a.id),value:edGetHPVal('TOT_'+a.id),color:col,fontSize:fs(13),rotation:rot(o.u)});
+    // total que sale por este acceso, al otro lado de la vía
+    if(movs.some(m=>m.dst===a.id)){
+      const ps=dentro(add(add(C,o.u,o.far-2),der(o.u),o.hw*0.5+50*E),55*E);
+      push({type:'hpval',x:r1(ps.x),y:r1(ps.y),movCode:'SAL_'+a.id,movLabel:edGetMovLabel('SAL_'+a.id),value:edGetHPVal('SAL_'+a.id),color:col,fontSize:fs(13),rotation:rot(o.u)});
+    }
+  });
+
+  // valores de cada movimiento, apilados al final de su salida en el mismo orden que los carriles
+  ids.forEach(j=>{
+    const s=L[j], llegan=movs.filter(m=>m.dst===j).sort((a,b)=>FR[a.tipo]-FR[b.tipo]);
+    llegan.forEach((m,k)=>{
+      const p=dentro(add(add(C,s.u,Math.max(s.rs+70*E,Math.min(s.rs+150*E,s.far-15*E))),der(s.u),s.hw*0.15+k*21*E),40*E);
+      push({type:'hpval',x:r1(p.x),y:r1(p.y),movCode:m.code,movLabel:m.code,value:m.vol,color:edGetMovColor(m.code),fontSize:fs(9),rotation:rot(s.u)});
+    });
+  });
+
+  // cruces peatonales: lados X-1 y X-2 de cada acceso, en ambos sentidos
+  accs.forEach(a=>{
+    const o=L[a.id], n=der(o.u), pre=a.id.startsWith('ACC')?'A'+a.id.slice(3):a.id;
+    const lados=(S.lados||[]).filter(l=>l.activo&&l.nombre.startsWith(pre+'-'));
+    if(!lados.length) return;
+    const col=edGetMovColor('TOT_'+a.id), e=o.hw+10*E;
+    [[-1,6],[1,-6]].forEach(([sg,dz])=>{
+      const c=add(C,o.u,o.rs+(30+dz)*E), p1=add(c,n,-e*sg), p2=add(c,n,e*sg);
+      push({type:'pearrow',x1:r1(p1.x),y1:r1(p1.y),x2:r1(p2.x),y2:r1(p2.y),color:col,width:5,as:fs(14)});
+    });
+    lados.slice(0,2).forEach((l,k)=>{
+      const p=dentro(add(add(C,o.u,o.rs+62*E),n,(k===0?1:-1)*(o.hw+24*E)),40*E);
+      push({type:'hpval',x:r1(p.x),y:r1(p.y),movCode:'PEAT_'+l.nombre,movLabel:l.nombre,value:edGetHPVal('PEAT_'+l.nombre),color:col,fontSize:fs(9),rotation:rot(o.u)});
+    });
+  });
+
+  // nombre de cada vía, una vez, sobre el brazo más largo
+  const colTexto=(S.flujoGeo&&S.flujoGeo.base==='esquema')?'#3c4043':'#FFFFFF';   // oscuro sobre el esquema claro
+  const vistas=new Set();
+  accs.slice().sort((a,b)=>L[b.id].far-L[a.id].far).forEach(a=>{
+    if(!a.via||vistas.has(a.via)) return; vistas.add(a.via);
+    const o=L[a.id], p=dentro(add(add(C,o.u,(o.rs+o.far)/2+40*E),der(o.u),-(o.hw+30*E)),60*E);
+    push({type:'text',x:r1(p.x),y:r1(p.y),text:a.via,fontSize:fs(16),bold:true,color:colTexto,rotation:rot(o.u)});
+  });
+
+  if(opc.norte) push({type:'north',x:W-55*E,y:65*E,size:fs(60),rotation:0});
+
+  edSaveHist();
+  edState.elements=els; edState.nextId=id; edSelectedId=null;
+  edSaveStorage();
+  if(edInited){ edUpdateElemList(); edUpdateProps(); edRender(); }
+  notify(`<i class="fa-solid fa-check"></i> Flujograma generado: ${movs.length} movimientos.`+(sinDestino.length?` Sin salida clara: ${sinDestino.join(', ')}.`:''),5000);
+  return els.length;
+}
+
+// ── Imagen de fondo subida a mano: se reduce y recomprime para no llenar la memoria ──
+function edComprimirImagen(src,maxLado,calidad){
+  return new Promise(ok=>{
+    const im=new Image();
+    im.onload=()=>{
+      const k=Math.min(1,(maxLado||2400)/Math.max(im.naturalWidth,im.naturalHeight));
+      const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height);
+      let out=src; try{ out=c.toDataURL('image/jpeg',calidad||0.85); }catch(e){}
+      ok(k<1||out.length<src.length?out:src);
+    };
+    im.onerror=()=>ok(src);
+    im.src=src;
+  });
 }
 
 </script>

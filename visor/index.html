@@ -38,6 +38,7 @@
     <input type="file" id="file-open" accept=".json" style="display:none">
     <button class="btn" id="btn-open" title="Abrir proyecto de UrbanCore o sesión de RutaCore / ClasificadorVial"><i class="fa-solid fa-folder-open"></i> Abrir</button>
     <button class="btn" id="btn-ruler" disabled title="Regla de medición"><i class="fa-solid fa-ruler"></i> Regla</button>
+    <button class="btn" id="btn-sv" disabled title="Street View: clic en el mapa para ver la zona en Google Maps"><i class="fa-solid fa-street-view"></i> Street View</button>
     <div class="export-wrap">
       <button class="btn" id="btn-export" disabled>Exportar ▾</button>
       <div class="export-menu" id="export-menu"></div>
@@ -114,6 +115,7 @@
 <script src="nucleo/modulos.js"></script>
 <script src="nucleo/proyecto.js"></script>
 <script src="nucleo/regla.js"></script>
+<script src="nucleo/streetview.js"></script>
 
 <!-- Módulos: para agregar uno nuevo, crear su archivo en modulos/ y sumarlo aquí -->
 <script src="modulos/rutas.js"></script>
@@ -121,8 +123,12 @@
 <script src="modulos/jerarquia.js"></script>
 <script src="modulos/analisis.js"></script>
 <script src="modulos/cobertura.js"></script>
+<script src="modulos/paraderos.js"></script>
+<script src="modulos/atributos.js"></script>
 
 <script src="nucleo/arranque.js"></script>
+<script src="nucleo/autoguardado.js"></script>
+<script src="nucleo/bienvenida.js"></script>
 
 <script>
 /* Modo oscuro (solo con el tema Google): no toca ninguna función del visor, solo un atributo del <html> */

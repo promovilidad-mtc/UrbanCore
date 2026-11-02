@@ -115,7 +115,7 @@
   const cont = map.getContainer();
   cont.addEventListener('mousedown', e => {
     if(!activo || !pintando || e.button !== 0) return;
-    if(e.target.closest('.leaflet-control') || (UC.regla && UC.regla.activa())) return;
+    if(e.target.closest('.leaflet-control') || (UC.regla && UC.regla.activa()) || (UC.streetview && UC.streetview.activa())) return;
     const p = map.mouseEventToContainerPoint(e);
     const si = UC.red.cercano(p, PICK_TOL);
     if(!si) return;                              // zona vacía → Leaflet mueve el mapa
@@ -216,6 +216,7 @@
     redibujarTodo(); construirNombres(); contar();
   });
   UC.eventos.on('red:cargada', () => { construirNombres(); contar(); });
+  UC.eventos.on('red:atributos', () => construirNombres());   // pudo cambiar el nombre de una vía
 
   /* ── Proyecto / sesiones del Clasificador ── */
   function cargar(datos, op){
@@ -275,5 +276,7 @@
     usosDeTramo(id){ const t = tipos.get(id); return t ? [`Jerarquía (vía ${LABELS[t].toLowerCase()})`] : []; }
   });
 
-  UC.jerarquia = { tipo:id => tipos.get(id) || 'local' };
+  UC.jerarquia = { tipo:id => tipos.get(id) || 'local', LABELS,
+    // Clasificar desde otro módulo (Atributos). Varios ids = un solo paso de Deshacer
+    asignar(ids, tipo){ lote = null; [].concat(ids).forEach(id => clasificar(id, tipo)); lote = null; } };
 })();

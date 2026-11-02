@@ -44,10 +44,12 @@
     }else map.closeTooltip(hoverTip);
   }
   const quiereHover = m => typeof m.hoverTramos === 'function' ? m.hoverTramos() : !!m.hoverTramos;
+  // Regla o Street View activas: los clics son de la herramienta, no del módulo
+  const herramienta = () => (UC.regla && UC.regla.activa()) || (UC.streetview && UC.streetview.activa());
 
   map.on('mousemove', e => {
     const m = UC.modulos && UC.modulos.activo();
-    if(!m || !UC.red.cargada() || (UC.regla && UC.regla.activa())){ if(hoverSi) resaltar(null); return; }
+    if(!m || !UC.red.cargada() || herramienta()){ if(hoverSi) resaltar(null); return; }
     if(m.alMoverMapa) m.alMoverMapa(e);
     ultimoEvento = e;
     if(!raf) raf = requestAnimationFrame(() => {
@@ -63,7 +65,7 @@
 
   map.on('click', e => {
     const m = UC.modulos && UC.modulos.activo();
-    if(!m || !UC.red.cargada() || (UC.regla && UC.regla.activa())) return;
+    if(!m || !UC.red.cargada() || herramienta()) return;
     if(m.alClicMapa && m.alClicMapa(e)) return;
     if(m.alClic) m.alClic(UC.red.cercano(e.containerPoint, HIT_PX), e);
   });

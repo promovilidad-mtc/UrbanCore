@@ -17,6 +17,7 @@
     b.innerHTML = '<i class="fa-solid fa-check"></i> Red vial';
     el('btn-export').disabled = false;
     el('btn-ruler').disabled = false;
+    el('btn-sv').disabled = false;
   };
 
   // Módulo inicial: el que venga en la dirección (?modulo=rutas) o Rutas

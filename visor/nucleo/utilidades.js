@@ -74,6 +74,8 @@ UC.util = {
    'red:cambiada'    → {eliminados:Set, agregados:Set}: se borraron, dibujaron o reemplazaron tramos
    'rutas:cambiadas' → cambió alguna ruta (tramos, nombre, color o se creó/borró)
    'jerarquia:cambiada' → cambió la clasificación vial
+   'red:atributos'   → se editaron datos (properties) de tramos desde el módulo Atributos
+   'paraderos:cambiados' → se agregó, movió, aceptó o borró un paradero, o cambió una capa de Paraderos
    'proyecto:abierto' → se terminó de abrir un proyecto o sesión */
 UC.eventos = {
   _h: {},

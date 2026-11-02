@@ -37,11 +37,13 @@
      Cada módulo dibuja en su propio pane, así nunca se tapan de forma inesperada. */
   const PANES = [
     ['corredorPane', 395],  // Cobertura: corredores del proyecto (debajo de la red)
+    ['pdCobPane', 398],     // Paraderos: cobertura caminando (debajo de la red)
     ['jerPane', 402],       // Jerarquía: vías principales clasificadas
     ['denPane', 405],       // Análisis: densidad
     ['selPane', 410],       // selecciones y resaltados de búsqueda
     ['rutasPane', 420],     // rutas
     ['overlapPane', 425],   // Cobertura: superposición
+    ['equipPane', 428],     // Paraderos: equipamientos urbanos
     ['hoverPane', 430],     // resaltado bajo el mouse
     ['editPane', 440]       // edición de red (tramo en dibujo)
   ];

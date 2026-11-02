@@ -338,7 +338,8 @@
     const features = [];
     routes.forEach(r => ['ida','vuelta'].forEach(v => r[v].forEach(s => {
       const si = UC.red.porId.get(s.segId); if(!si) return;
-      features.push({ type:'Feature', properties:{ nombre_ruta:r.nombre, sentido:v, color:r.color, ruta_id:r.id, seg_id:s.segId },
+      // Los campos propios de la ruta (módulo Atributos) van primero: los del formato RutaCore no se pisan
+      features.push({ type:'Feature', properties:{ ...(r.atributos || {}), nombre_ruta:r.nombre, sentido:v, color:r.color, ruta_id:r.id, seg_id:s.segId },
                       geometry:{ type:'LineString', coordinates:si.latlngs.map(ll => [ll[1], ll[0]]) } });
     })));
     if(!features.length){ alert('Las rutas no tienen segmentos trazados.'); return; }
@@ -369,6 +370,8 @@
     }
   });
 
-  // API para los otros módulos (Análisis, Cobertura)
-  UC.rutas = { lista:() => routes, cantidad:() => routes.length };
+  // API para los otros módulos (Análisis, Cobertura, Atributos)
+  UC.rutas = { lista:() => routes, cantidad:() => routes.length, km:variantKm,
+    // Atributos cambió nombre o color de una ruta desde afuera: redibujar mapa y panel
+    refrescar(){ refreshAll(); renderRoutesPanel(); updateInfoBar(); } };
 })();

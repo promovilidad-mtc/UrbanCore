@@ -44,6 +44,7 @@
     if(!m || m === activo) return;
     if(!UC.red.cargada()) return;
     if(UC.regla && UC.regla.activa()) UC.regla.apagar();
+    if(UC.streetview) UC.streetview.apagar();
     if(activo){ activo.desactivar && activo.desactivar(); activo.panel.classList.remove('activo'); activo.resultados && activo.resultados.classList.remove('activo'); activo._boton.classList.remove('activo'); }
     UC.interaccion.limpiar();
     UC.el('map').className = '';

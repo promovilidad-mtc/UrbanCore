@@ -16,14 +16,18 @@
 
   function nombreDesdeArchivo(n){ return n.replace(/\.[^.]+$/, '').replace(/[-_](proyecto|sesion|sesión)$/i, ''); }
 
-  P.guardar = function(){
-    if(!UC.red.cargada()){ alert('Cargá una red vial primero.'); return; }
+  // El proyecto completo como objeto (lo usan Guardar y el autoguardado)
+  P.datos = function(){
     const modulos = {};
     UC.modulos.lista().forEach(m => { if(m.serializar){ const d = m.serializar(); if(d) modulos[m.id] = d; } });
-    const datos = { tipo:'urbancore-proyecto', version:1, nombre:P.nombre || 'Proyecto', guardadoEn:new Date().toISOString(),
-                    red:{ features:UC.red.features }, modulos };
+    return { tipo:'urbancore-proyecto', version:1, nombre:P.nombre || 'Proyecto', guardadoEn:new Date().toISOString(),
+             red:{ features:UC.red.features }, modulos };
+  };
+
+  P.guardar = function(){
+    if(!UC.red.cargada()){ alert('Cargá una red vial primero.'); return; }
     const base = (P.nombre || 'urbancore').replace(/[^\wáéíóúñÁÉÍÓÚÑ-]+/g, '_');
-    UC.ui.descargarTexto(`${base}-proyecto.json`, JSON.stringify(datos));
+    UC.ui.descargarTexto(`${base}-proyecto.json`, JSON.stringify(P.datos()));
     UC.ui.instruccion('Proyecto guardado');
   };
 

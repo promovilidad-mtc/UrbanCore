@@ -372,6 +372,7 @@ input[type=number]:focus,select:focus{outline:none;border-color:var(--brand);box
 #map.cursor-pick{cursor:pointer}
 #map.cursor-area{cursor:crosshair}
 #map.cursor-borrar-red{cursor:not-allowed}
+#map.cursor-sv{cursor:crosshair}
 
 /* Panel de capas */
 #capas-btn{position:fixed;left:calc(var(--panel-w) + 262px);bottom:calc(var(--info-bar-h) + 24px);z-index:850;box-shadow:var(--glass-shadow-sm)}
@@ -384,3 +385,118 @@ input[type=number]:focus,select:focus{outline:none;border-color:var(--brand);box
 #results.show{display:block}
 .warn{font-size:11.5px;color:#b45309;background:rgba(245,158,11,.12);border-radius:10px;padding:7px 10px;margin-top:8px;line-height:1.5}
 #info-bar.oculto{display:none}
+
+/* Con 6 módulos la barra no entra en pantallas angostas: ahí se ven solo los íconos (el nombre queda en el tooltip) */
+@media (max-width:1480px){
+  #modulos-nav button{font-size:0;gap:0;padding:7px 11px}
+  #modulos-nav button i{font-size:13px}
+}
+
+/* ── Módulo Atributos: ficha (panel izquierdo) y tabla (abajo, a lo ancho) ── */
+:root{--at-h:38vh}
+.at-ficha-titulo{font-size:14px;font-weight:600;color:var(--text);margin:2px 0 10px;word-break:break-word}
+.at-campo{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;margin-bottom:6px}
+.at-campo label{font-size:11.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.at-campo.fijo label{font-weight:600;color:var(--text)}
+.at-input{width:100%;min-width:0;border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:12.5px;color:var(--text);background:var(--card);font-family:inherit}
+.at-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 2px rgba(0,122,255,.18)}
+.at-input[readonly]{background:transparent;border-color:transparent;color:var(--text-2);box-shadow:none}
+.at-color{width:44px;height:28px;border:1px solid var(--border);border-radius:6px;padding:2px;background:var(--card);cursor:pointer}
+.at-sep{height:1px;background:var(--border);margin:10px 0}
+.at-nuevo{display:flex;gap:6px;margin-top:10px}
+.at-nuevo .btn{flex-shrink:0;font-size:11.5px;padding:6px 10px}
+.at-opciones{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.at-opciones .hint{width:100%}
+.at-chip{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:999px;padding:4px 10px;font-size:11.5px;cursor:pointer;font-family:inherit}
+.at-chip.activo{border-color:#06b6d4;color:#0891b2;font-weight:600;background:rgba(6,182,212,.12)}
+#at-tabla-panel{position:fixed;left:calc(var(--panel-w) + 24px);right:12px;bottom:12px;height:var(--at-h);z-index:900;display:none;flex-direction:column;overflow:hidden;background:var(--glass-bg-strong);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:var(--radius-lg);box-shadow:var(--glass-shadow)}
+#at-tabla-panel.show{display:flex}
+.at-t-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.at-t-tit{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);margin-right:auto}
+.at-t-cuenta{font-weight:400;color:var(--text-2);font-size:12px}
+.at-t-hd .search-box{margin:0;width:240px}
+.at-t-hd .btn{font-size:12px;padding:6px 11px}
+.at-t-pag{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)}
+.at-t-pag .btn,#at-t-cerrar{padding:6px 9px}
+.at-masivo{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-2);flex-wrap:wrap}
+.at-masivo[hidden],.at-masivo [hidden]{display:none}
+.at-masivo .at-input{width:auto;min-width:170px}
+.at-t-wrap{flex:1;overflow:auto}
+.at-t{border-collapse:collapse;font-size:12px;min-width:100%}
+.at-t th{position:sticky;top:0;z-index:1;background:var(--card);text-align:left;font-weight:600;color:var(--text);padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+.at-t th:hover{color:var(--brand)}
+.at-t td{padding:2px 4px;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text-2)}
+.at-t td:first-child{text-align:right;padding:2px 10px;cursor:pointer;font-variant-numeric:tabular-nums}
+.at-t tr:hover td{background:rgba(127,127,127,.07)}
+.at-t tr.sel td{background:rgba(6,182,212,.15)}
+.at-t .at-input{min-width:110px;padding:4px 7px;border-color:transparent;background:transparent}
+.at-t .at-input:not([readonly]):hover{border-color:var(--border)}
+.at-t .at-input:focus{background:var(--card);border-color:var(--brand)}
+.at-t .at-input[readonly]{min-width:60px}
+.at-t-vacio{padding:24px;text-align:center}
+/* ── Módulo Paraderos ── */
+.pd-marker{background:none;border:none}
+body:not(.pd-on) .pd-marker{pointer-events:none !important}   /* fuera del módulo no tapan los clics de los demás */
+.pd-ic{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.45);box-sizing:border-box}
+.pd-ex{width:14px;height:14px;border:2px solid #fff}
+.pd-pr{width:24px;height:24px;border:2.5px solid #fff;font-size:11px;cursor:grab}
+.pd-pr i{font-size:10px}
+.pd-ic.sel{outline:3px solid #06b6d4;outline-offset:2px}
+.pd-fl{position:absolute;inset:0;pointer-events:none}
+.pd-fl::before{content:'';position:absolute;left:50%;top:-9px;margin-left:-5px;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid currentColor;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)}
+.pd-ex .pd-fl::before{top:-10px}
+.pd-capa{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.pd-capa .btn{font-size:11.5px;padding:5px 10px;flex-shrink:0}
+.pd-capa-n{flex:1;min-width:0;font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;vertical-align:middle}
+.pd-x{border:none;background:transparent;color:var(--text-2);cursor:pointer;padding:4px 6px;border-radius:6px}
+.pd-x:hover{color:#dc2626;background:rgba(220,38,38,.1)}
+.pd-leyenda{display:flex;gap:14px;font-size:11.5px;color:var(--text-2);margin-top:4px}
+.pd-leyenda i{display:inline-block;width:18px;height:5px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.pd-sub{font-size:11.5px;font-weight:600;color:var(--text);margin:12px 0 4px}
+.pd-badge{min-width:20px;height:20px;padding:0 5px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:700;flex-shrink:0}
+.pd-badge.sm{min-width:18px;height:18px;font-size:10px}
+.pd-badge i{font-size:9.5px}
+.pd-f-tit{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text)}
+.pd-mini{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:6px;padding:2px 6px;margin-left:4px;cursor:pointer;font-size:11px}
+.pd-mini:hover{border-color:var(--brand);color:var(--brand)}
+.pd-ruta-fila{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0}
+.pd-rf-n{flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.pd-item:hover{background:rgba(127,127,127,.08)}
+.pd-item.sel{border-color:#06b6d4;background:rgba(6,182,212,.1)}
+.pd-item-t{min-width:0;flex:1}
+.pd-item-n{font-size:12.5px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-item-s{font-size:11px;color:var(--text-2)}
+.pd-rl{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--text)}
+.pd-rl:hover{background:rgba(127,127,127,.08)}
+.pd-rl-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-gap{font-size:11px;font-weight:600;padding:1px 0 1px 13px;border-left:2px dotted var(--border);margin-left:14px}
+.pd-gap i{font-size:9px;margin-right:3px}
+
+/* ── Bienvenida (portada mientras no hay red; el encabezado queda encima y usable) ── */
+#bienvenida{position:fixed;inset:0;z-index:1050;display:flex;align-items:center;justify-content:center;padding:96px 16px 24px;background:color-mix(in srgb, var(--bg) 72%, transparent);backdrop-filter:blur(3px)}
+#bienvenida.oculta{display:none}
+.bv-card{width:min(720px,100%);max-height:100%;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--glass-shadow);padding:28px 30px;text-align:center}
+.bv-logo{font-size:28px;font-weight:700;color:var(--brand);letter-spacing:-.5px}
+.bv-logo span{color:var(--text)}
+.bv-sub{font-size:13px;color:var(--text-2);margin:4px 0 22px}
+.bv-pasos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.bv-paso{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 12px 14px;border:1px solid var(--border);border-radius:12px}
+.bv-paso i{font-size:20px;color:var(--brand);margin-bottom:2px}
+.bv-paso b{font-size:13px;font-weight:600;color:var(--text)}
+.bv-paso span{font-size:11.5px;color:var(--text-2);line-height:1.45}
+.bv-num{position:absolute;top:8px;left:11px;font-size:11px;font-weight:700;color:var(--text-2)}
+.bv-recuperar{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;margin-bottom:16px;border:1px solid var(--brand);border-radius:12px;background:color-mix(in srgb, var(--brand) 8%, transparent)}
+.bv-recuperar[hidden],.bv-acciones .btn[hidden]{display:none}
+.bv-recuperar > i{font-size:18px;color:var(--brand)}
+.bv-rec-txt{flex:1;display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-2)}
+.bv-rec-txt b{font-size:13px;color:var(--text)}
+.bv-acciones{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.bv-acciones .btn{padding:9px 16px;font-size:13px}
+.bv-pie{font-size:11.5px;color:var(--text-2);margin-top:14px}
+@media (max-width:640px){.bv-pasos{grid-template-columns:1fr}.bv-recuperar{flex-wrap:wrap}}
+
+/* Con la tabla abierta, los controles de fondo y capas suben para no quedar tapados */
+body.at-tabla-on #basemap-ctrl,body.at-tabla-on #capas-btn{bottom:calc(var(--at-h) + 24px)}
+body.at-tabla-on #capas-panel{bottom:calc(var(--at-h) + 66px)}
