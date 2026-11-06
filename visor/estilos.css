@@ -501,3 +501,34 @@ body:not(.pd-on) .pd-marker{pointer-events:none !important}   /* fuera del módu
 /* Con la tabla abierta, los controles de fondo y capas suben para no quedar tapados */
 body.at-tabla-on #basemap-ctrl,body.at-tabla-on #capas-btn{bottom:calc(var(--at-h) + 24px)}
 body.at-tabla-on #capas-panel{bottom:calc(var(--at-h) + 66px)}
+
+/* ── Descargar red de OpenStreetMap (nucleo/osm.js) ── */
+#osm-panel{position:fixed;top:84px;right:12px;width:340px;max-height:calc(100vh - 108px);overflow-y:auto;z-index:1150;display:none;flex-direction:column;gap:10px;padding:14px 16px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);font-size:13px;color:var(--text)}
+#osm-panel.show{display:flex}
+.osm-cab{display:flex;align-items:center;gap:8px}
+.osm-cab > i{color:var(--brand);font-size:16px}
+.osm-cab b{flex:1;font-size:14px;font-weight:600}
+.osm-x{border:0;background:none;color:var(--text-2);cursor:pointer;width:28px;height:28px;border-radius:50%;font-size:15px}
+.osm-x:hover{background:rgba(127,127,127,.15);color:var(--text)}
+.osm-paso{display:flex;gap:8px;align-items:flex-start;color:var(--text-2);line-height:1.45}
+.osm-n{flex:0 0 18px;height:18px;border-radius:50%;background:var(--brand);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.osm-buscar{display:flex;gap:6px}
+.osm-buscar input{flex:1;min-width:0;height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font:inherit}
+.osm-buscar input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.osm-resultados{display:flex;flex-direction:column;gap:4px}
+.osm-resultados:empty{display:none}
+.osm-res{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);cursor:pointer;font:inherit}
+.osm-res:hover{border-color:var(--brand)}
+.osm-res span{font-size:11.5px;color:var(--text-2)}
+.osm-res b em{font-style:normal;font-weight:500;font-size:10.5px;color:var(--brand);background:color-mix(in srgb, var(--brand) 12%, transparent);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.osm-msg{font-size:12px;color:var(--text-2);padding:4px 2px}
+.osm-zona{font-size:12px;padding:8px 10px;border-radius:8px;line-height:1.4;background:rgba(30,142,62,.10);color:#188038}
+.osm-zona[data-estado="aviso"]{background:rgba(249,171,0,.14);color:#b06000}
+.osm-zona[data-estado="mal"]{background:rgba(217,48,37,.10);color:#c5221f}
+.osm-ir{justify-content:center;height:38px}
+.osm-ok{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--brand);border-radius:10px;line-height:1.45}
+.osm-ok[hidden]{display:none}
+.osm-ok i.fa-circle-check{color:#1e8e3e}
+.osm-ok > span{font-size:11.5px;color:var(--text-2)}
+.osm-pie{font-size:11px;color:var(--text-2);line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
+@media (max-width:720px){#osm-panel{left:12px;right:12px;width:auto}}

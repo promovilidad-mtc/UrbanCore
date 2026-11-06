@@ -18,7 +18,7 @@
       <div class="bv-logo">UrbanCore <span>Visor</span></div>
       <div class="bv-sub">Planificación de rutas de transporte sobre la red vial · PROMOVILIDAD / MTC</div>
       <div class="bv-pasos">
-        <div class="bv-paso"><div class="bv-num">1</div><i class="fa-solid fa-map"></i><b>Carga la red vial</b><span>Shapefile .zip, GeoJSON, KML o KMZ. Se corta sola en las esquinas.</span></div>
+        <div class="bv-paso"><div class="bv-num">1</div><i class="fa-solid fa-map"></i><b>Carga la red vial</b><span>Shapefile .zip, GeoJSON, KML o KMZ, o descárgala de OpenStreetMap. Se corta sola en las esquinas.</span></div>
         <div class="bv-paso"><div class="bv-num">2</div><i class="fa-solid fa-route"></i><b>Traza y clasifica</b><span>Rutas tramo a tramo, edición de la red y jerarquía vial.</span></div>
         <div class="bv-paso"><div class="bv-num">3</div><i class="fa-solid fa-magnifying-glass-chart"></i><b>Analiza y exporta</b><span>Superposición, cobertura, paraderos, atributos, Excel y GeoJSON.</span></div>
       </div>
@@ -30,6 +30,7 @@
       </div>
       <div class="bv-acciones">
         <button class="btn primary" id="bv-red"><i class="fa-solid fa-map"></i> Cargar red vial</button>
+        <button class="btn" id="bv-osm" title="Descargar la red vial de tu ciudad desde OpenStreetMap (requiere internet)"><i class="fa-solid fa-cloud-arrow-down"></i> Descargar de OSM</button>
         <button class="btn" id="bv-abrir"><i class="fa-solid fa-folder-open"></i> Abrir proyecto</button>
         <button class="btn" id="bv-demo" hidden><i class="fa-solid fa-play"></i> Ver proyecto de ejemplo</button>
       </div>

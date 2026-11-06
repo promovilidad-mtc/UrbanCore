@@ -36,6 +36,7 @@
     <span class="status-pill" id="status-pill">Sin red vial</span>
     <input type="file" id="file-red" accept=".zip,.geojson,.json,.kml,.kmz" style="display:none">
     <button class="btn primary" id="btn-load-red" title="Cargar red vial (shapefile .zip, GeoJSON, KML, KMZ)"><i class="fa-solid fa-map"></i> Red vial</button>
+    <button class="btn" id="btn-osm" title="Descargar la red vial de OpenStreetMap (requiere internet)"><i class="fa-solid fa-cloud-arrow-down"></i> OSM</button>
     <input type="file" id="file-open" accept=".json" style="display:none">
     <button class="btn" id="btn-open" title="Abrir proyecto de UrbanCore o sesión de RutaCore / ClasificadorVial"><i class="fa-solid fa-folder-open"></i> Abrir</button>
     <button class="btn" id="btn-ruler" disabled title="Regla de medición"><i class="fa-solid fa-ruler"></i> Regla</button>
@@ -136,6 +137,7 @@
 <script src="nucleo/arranque.js"></script>
 <script src="nucleo/autoguardado.js"></script>
 <script src="nucleo/bienvenida.js"></script>
+<script src="nucleo/osm.js"></script>
 
 <script>
 /* Modo oscuro (solo con el tema Google): no toca ninguna función del visor, solo un atributo del <html> */
