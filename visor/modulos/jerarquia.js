@@ -42,7 +42,7 @@
           <div class="brush-label"><span class="brush-name">Vía ${LABELS[t]}</span><span class="brush-range">${RANGO[t].min}–${RANGO[t].max} m${t === 'local' ? ' · por defecto' : ''}</span></div>
         </div>`).join('')}
       </div>
-      <div class="kbd-hint">Toda la red arranca como Vía Local: solo pintá expresas, arteriales y colectoras. Para devolver un tramo a local, pintalo con Vía Local. Arrastrando desde una zona vacía movés el mapa.<br>Atajos: 1–4 jerarquía · P pincel · Ctrl+Z deshacer</div>
+      <div class="kbd-hint">Toda la red arranca como Vía Local: solo pinta expresas, arteriales y colectoras. Para devolver un tramo a local, píntalo con Vía Local. Arrastrando desde una zona vacía mueves el mapa.<br>Atajos: 1–4 jerarquía · P pincel · Ctrl+Z deshacer</div>
     </div>
     <div class="panel-section">
       <div class="panel-section-header">
@@ -50,7 +50,7 @@
         <span class="panel-section-title">Buscar por nombre de vía</span>
       </div>
       <div class="search-box"><input type="text" id="jq-search" placeholder="Ej: Av. Grau…"></div>
-      <div class="search-results" id="jq-results"><div class="hint">Escribí el nombre de una vía.</div></div>
+      <div class="search-results" id="jq-results"><div class="hint">Escribe el nombre de una vía.</div></div>
       <button class="btn btn-clasificar-todos" id="jq-todos" disabled>Clasificar resaltados como: <span id="jq-lbl">Arterial</span></button>
     </div>
     <div class="panel-section">
@@ -141,7 +141,7 @@
     el('jq-pincel').classList.toggle('mode-active', on);
     el('map').classList.toggle('cursor-paint', on);
     if(!on){ UC.interaccion.limpiar(); arrastrando = false; map.dragging.enable(); }
-    UC.ui.instruccion(on ? `Pincel activo (${LABELS[brushTipo]}) — clic o arrastre sobre la red para pintar · arrastre en vacío para mover el mapa` : 'Pincel desactivado — activalo para clasificar');
+    UC.ui.instruccion(on ? `Pincel activo (${LABELS[brushTipo]}) — clic o arrastre sobre la red para pintar · arrastre en vacío para mover el mapa` : 'Pincel desactivado — actívalo para clasificar');
   }
   panel.querySelector('#jq-pincel').addEventListener('click', () => setPincel(!pintando));
   function setBrush(t){
@@ -180,7 +180,7 @@
     const q = q0.toLowerCase().trim(), box = el('jq-results');
     limpiarResaltado(); box.innerHTML = ''; el('jq-todos').disabled = true;
     const hint = t => { const d = document.createElement('div'); d.className = 'hint'; d.textContent = t; box.appendChild(d); };
-    if(!q){ hint('Escribí el nombre de una vía.'); return; }
+    if(!q){ hint('Escribe el nombre de una vía.'); return; }
     const res = []; nameIndex.forEach((v, k) => { if(k.includes(q)) res.push(v); });
     res.sort((a, b) => a.name.localeCompare(b.name, 'es'));
     if(!res.length){ hint(`Sin resultados para "${q0}".`); return; }
@@ -198,7 +198,7 @@
       });
       box.appendChild(row);
     });
-    if(res.length > 20) hint(`... y ${res.length - 20} más. Refiná la búsqueda.`);
+    if(res.length > 20) hint(`... y ${res.length - 20} más. Refina la búsqueda.`);
   }
   let tBusca = 0;
   panel.querySelector('#jq-search').addEventListener('input', e => { clearTimeout(tBusca); const v = e.target.value; tBusca = setTimeout(() => buscar(v), 150); });

@@ -25,7 +25,7 @@
   };
 
   P.guardar = function(){
-    if(!UC.red.cargada()){ alert('Cargá una red vial primero.'); return; }
+    if(!UC.red.cargada()){ alert('Carga una red vial primero.'); return; }
     const base = (P.nombre || 'urbancore').replace(/[^\wáéíóúñÁÉÍÓÚÑ-]+/g, '_');
     UC.ui.descargarTexto(`${base}-proyecto.json`, JSON.stringify(P.datos()));
     UC.ui.instruccion('Proyecto guardado');

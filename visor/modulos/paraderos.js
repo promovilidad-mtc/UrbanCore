@@ -465,7 +465,7 @@
     const p = { id:nuevoId(), tipo:'propuesto', segId:si.segId, s:pr.s, sentido:sentidoSugerido(si.segId, pr.lado), aceptado:false, nombre:'', atributos:{} };
     guardarUndo(); propuestos.push(p); selId = p.id;
     cambio();
-    UC.ui.instruccion(`Propuesto ${propuestos.length} agregado (${sentidoTxt(p).toLowerCase()}) · arrastralo para moverlo · clic en la flecha de la ficha para invertir el sentido`);
+    UC.ui.instruccion(`Propuesto ${propuestos.length} agregado (${sentidoTxt(p).toLowerCase()}) · arrástralo para moverlo · clic en la flecha de la ficha para invertir el sentido`);
   }
   // Soltar tras arrastrar: se reubica en la vía más cercana conservando hacia dónde circulaba
   function soltar(id, ll){
@@ -489,7 +489,7 @@
   function eliminar(p){
     guardarUndo(); propuestos = propuestos.filter(x => x !== p);
     if(selId === p.id) selId = null;
-    cambio(); UC.ui.instruccion('Propuesto eliminado · podés deshacer con Ctrl+Z.');
+    cambio(); UC.ui.instruccion('Propuesto eliminado · puedes deshacer con Ctrl+Z.');
   }
   function aceptar(p){ guardarUndo(); p.aceptado = !p.aceptado; cambio(); }
   // Street View en el paradero, mirando hacia su vereda (a la derecha del sentido en que circula)
@@ -514,7 +514,7 @@
         <button class="btn" id="pd-agregar" title="Clic sobre una vía para ubicar un paradero propuesto"><i class="fa-solid fa-plus"></i> Agregar propuesto</button>
         <button class="btn" id="pd-undo" disabled style="flex:0 0 38px" title="Deshacer (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
       </div>
-      <div class="hint">Clic sobre la vía, del lado por donde circula el bus. El sentido se toma de las rutas del tramo o del lado donde clicaste. Arrastrá un propuesto para moverlo.</div>
+      <div class="hint">Clic sobre la vía, del lado por donde circula el bus. El sentido se toma de las rutas del tramo o del lado donde hiciste clic. Arrastra un propuesto para moverlo.</div>
     </div>
     <div class="panel-section">
       <div class="panel-section-header"><div class="panel-section-icon blue"><i class="fa-solid fa-location-dot"></i></div><span class="panel-section-title">Paraderos existentes</span></div>
@@ -663,7 +663,7 @@
     <div class="res-section"><h2>Propuestos</h2><div id="pd-lista"></div></div>
     <div class="res-section"><h2>Paraderos por ruta</h2>
       <div class="field"><select id="pd-ruta"></select></div>
-      <div id="pd-ruta-lista"><div class="hint">Elegí una ruta para ver sus paraderos en orden y el espaciamiento entre ellos.</div></div>
+      <div id="pd-ruta-lista"><div class="hint">Elige una ruta para ver sus paraderos en orden y el espaciamiento entre ellos.</div></div>
     </div>`;
 
   const fila = (k, v, color) => `<div class="summary-row"><span${color ? ` style="color:${color}"` : ''}>${k}</span><span class="v"${color ? ` style="color:${color}"` : ''}>${v}</span></div>`;
@@ -722,7 +722,7 @@
 
   function renderLista(){
     const box = el('pd-lista');
-    if(!propuestos.length){ box.innerHTML = '<div class="hint">Activá <b>Agregar propuesto</b> y hacé clic sobre una vía.</div>'; return; }
+    if(!propuestos.length){ box.innerHTML = '<div class="hint">Activa <b>Agregar propuesto</b> y haz clic sobre una vía.</div>'; return; }
     box.innerHTML = '';
     propuestos.forEach(p => {
       const d = document.createElement('div'); d.className = 'pd-item' + (p.id === selId ? ' sel' : '');
@@ -745,7 +745,7 @@
     if(!vs.some(V => V.clave === rutaVista)) rutaVista = '';
     s.value = rutaVista;
     const box = el('pd-ruta-lista'), V = vs.find(x => x.clave === rutaVista);
-    if(!V){ box.innerHTML = `<div class="hint">${vs.length ? 'Elegí una ruta para ver sus paraderos en orden y el espaciamiento entre ellos.' : 'No hay rutas trazadas: los paraderos se evalúan a lo largo de la vía.'}</div>`; return; }
+    if(!V){ box.innerHTML = `<div class="hint">${vs.length ? 'Elige una ruta para ver sus paraderos en orden y el espaciamiento entre ellos.' : 'No hay rutas trazadas: los paraderos se evalúan a lo largo de la vía.'}</div>`; return; }
     const L2 = V.lista;
     if(!L2.length){ box.innerHTML = '<div class="hint">Esta ruta todavía no tiene paraderos en su sentido.</div>'; return; }
     let huecos = 0, suma = 0;

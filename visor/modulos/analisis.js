@@ -1,8 +1,8 @@
 'use strict';
 /* ══════════════════════════════════════════════════════════════════
    MÓDULO ANÁLISIS — superposición y densidad de rutas por tramo (antes: AnálisisCore)
-   Usa directamente las rutas del módulo Rutas: si trazás algo nuevo,
-   el análisis se actualiza solo la próxima vez que lo abrís.
+   Usa directamente las rutas del módulo Rutas: si trazas algo nuevo,
+   el análisis se actualiza solo la próxima vez que lo abras.
    ══════════════════════════════════════════════════════════════════ */
 (function(){
   const map = UC.mapa.map, el = UC.el, U = UC.util;
@@ -27,7 +27,7 @@
       <div id="an-pane-sup">
         <div class="tool-row">
           <button class="btn mode-active" id="an-click" title="Clic en un tramo para seleccionarlo o quitarlo"><i class="fa-solid fa-hand-pointer"></i> Clic</button>
-          <button class="btn" id="an-area" title="Arrastrá un rectángulo para sumar los tramos de una zona (también Shift + arrastre)"><i class="fa-regular fa-square"></i> Área</button>
+          <button class="btn" id="an-area" title="Arrastra un rectángulo para sumar los tramos de una zona (también Shift + arrastre)"><i class="fa-regular fa-square"></i> Área</button>
           <button class="btn" id="an-clear" title="Limpiar selección (Esc)"><i class="fa-solid fa-eraser"></i> Limpiar</button>
         </div>
         <div class="field">
@@ -43,7 +43,7 @@
       <div id="an-pane-den" style="display:none">
         <div class="switch-row"><span>Mostrar densidad</span><label class="switch"><input type="checkbox" id="an-chk-den" checked><span class="track"></span></label></div>
         <div class="switch-row"><span>Considerar sentido</span><label class="switch"><input type="checkbox" id="an-chk-sentido"><span class="track"></span></label></div>
-        <div class="hint" style="margin-top:6px">El color de cada tramo indica cuántas rutas pasan por él. Con <b>Considerar sentido</b>, ida y vuelta de una ruta cuentan por separado. Pasá el mouse por un tramo para ver cuáles son.</div>
+        <div class="hint" style="margin-top:6px">El color de cada tramo indica cuántas rutas pasan por él. Con <b>Considerar sentido</b>, ida y vuelta de una ruta cuentan por separado. Pasa el mouse por un tramo para ver cuáles son.</div>
       </div>
     </div>`;
 
@@ -62,7 +62,7 @@
         <button class="btn" id="an-show-all"><i class="fa-solid fa-eye"></i> Ver todas</button>
         <button class="btn" id="an-hide-all"><i class="fa-solid fa-eye-slash"></i> Ocultar todas</button>
       </div>
-      <div id="an-list"><div class="hint">Seleccioná uno o más tramos en el mapa.</div></div>
+      <div id="an-list"><div class="hint">Selecciona uno o más tramos en el mapa.</div></div>
     </div>
     <div id="an-res-den" class="res-section" style="display:none">
       <h2>Densidad de rutas</h2>
@@ -136,8 +136,8 @@
   function renderLista(){
     const list = el('an-list'); list.innerHTML = '';
     const hint = t => { const h = document.createElement('div'); h.className = 'hint'; h.textContent = t; list.appendChild(h); };
-    if(!seleccion.size){ hint('Seleccioná uno o más tramos en el mapa.'); return; }
-    if(!resultado.length){ hint(filtro === 'all' ? 'Ninguna ruta recorre todos los tramos seleccionados. Probá con "Cualquier tramo".' : 'Ninguna ruta pasa por los tramos seleccionados.'); return; }
+    if(!seleccion.size){ hint('Selecciona uno o más tramos en el mapa.'); return; }
+    if(!resultado.length){ hint(filtro === 'all' ? 'Ninguna ruta recorre todos los tramos seleccionados. Prueba con "Cualquier tramo".' : 'Ninguna ruta pasa por los tramos seleccionados.'); return; }
     resultado.forEach(r => {
       const row = document.createElement('div'); row.className = 'route-row' + (soloRuta === r.ri ? ' solo' : '');
       row.title = 'Clic para ver esta ruta sola (otro clic vuelve a todas)';
@@ -254,7 +254,7 @@
       row.append(sw, tx); leg.appendChild(row);
     });
   }
-  function actualizarDen(){ if(denDirty) calcularDensidad(); dibujarDensidad(); renderDensidad(); UC.ui.instruccion('Densidad de rutas — pasá el mouse por un tramo para ver qué rutas pasan'); }
+  function actualizarDen(){ if(denDirty) calcularDensidad(); dibujarDensidad(); renderDensidad(); UC.ui.instruccion('Densidad de rutas — pasa el mouse por un tramo para ver qué rutas pasan'); }
   panel.querySelector('#an-chk-den').addEventListener('change', dibujarDensidad);
   panel.querySelector('#an-chk-sentido').addEventListener('change', () => { denDirty = true; actualizarDen(); });
 
@@ -282,7 +282,7 @@
   }
   function exportarExcel(){
     prepararDatos();
-    if(!seleccion.size){ alert('Seleccioná tramos en el módulo Análisis primero.'); return; }
+    if(!seleccion.size){ alert('Selecciona tramos en el módulo Análisis primero.'); return; }
     resultado = calcular();
     const wb = XLSX.utils.book_new();
     const h1 = [['Ruta','Sentido','Tramos en la selección','% de la selección','Tramos ida','Tramos vuelta','Km en la selección']];
@@ -316,14 +316,14 @@
     panel, resultados:res,
     exportar:() => [
       { icono:'fa-file-excel', titulo:'Superposición en Excel', sub:'.xlsx — rutas y tramos seleccionados', accion:exportarExcel },
-      { icono:'fa-copy', titulo:'Copiar resumen de superposición', sub:'texto para el informe', accion:() => { prepararDatos(); if(!seleccion.size){ alert('Seleccioná tramos en el módulo Análisis primero.'); return; } resultado = calcular(); UC.ui.copiar(textoResumen()); UC.ui.instruccion('Resumen copiado al portapapeles'); } },
+      { icono:'fa-copy', titulo:'Copiar resumen de superposición', sub:'texto para el informe', accion:() => { prepararDatos(); if(!seleccion.size){ alert('Selecciona tramos en el módulo Análisis primero.'); return; } resultado = calcular(); UC.ui.copiar(textoResumen()); UC.ui.instruccion('Resumen copiado al portapapeles'); } },
       { icono:'fa-fire', titulo:'Densidad GeoJSON', sub:'.geojson — tramos con conteo de rutas', accion:exportarDensidad }
     ],
     activar(){
       activo = true; prepararDatos();
       selLayer.addTo(map); rutasLayer.addTo(map); denLayer.addTo(map);
       setModo(modo);
-      if(!UC.rutas.cantidad()) UC.ui.instruccion('No hay rutas en el proyecto: trazalas en el módulo Rutas o abrí una sesión de RutaCore');
+      if(!UC.rutas.cantidad()) UC.ui.instruccion('No hay rutas en el proyecto: trázalas en el módulo Rutas o abre una sesión de RutaCore');
     },
     desactivar(){
       activo = false;

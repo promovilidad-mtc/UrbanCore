@@ -44,8 +44,8 @@
   function borrar(si){
     const usos = UC.modulos.usosDeTramo(si.segId);
     const msg = usos.length
-      ? `Este tramo se usa en: ${usos.join(', ')}.\n\nSe eliminará de la red y también de esos lugares. ¿Confirmás?`
-      : '¿Confirmás eliminar este tramo de la red?';
+      ? `Este tramo se usa en: ${usos.join(', ')}.\n\nSe eliminará de la red y también de esos lugares. ¿Confirmas?`
+      : '¿Confirmas eliminar este tramo de la red?';
     if(!confirm(msg)) return;
     UC.interaccion.limpiar();
     UC.ui.loader('Eliminando tramo…');
@@ -107,8 +107,8 @@
     if(h === 'draw') map.doubleClickZoom.disable(); else map.doubleClickZoom.enable();
     UC.interaccion.limpiar();
     UC.ui.instruccion(h === 'delete' ? 'Clic sobre un tramo de la red para eliminarlo.'
-      : h === 'draw' ? 'Clic para agregar puntos (engancha a nodos existentes) · usá Guardar tramo para confirmar sin salir.'
-      : 'Elegí Borrar tramo o Dibujar tramo.');
+      : h === 'draw' ? 'Clic para agregar puntos (engancha a nodos existentes) · usa Guardar tramo para confirmar sin salir.'
+      : 'Elige Borrar tramo o Dibujar tramo.');
   }
   panel.querySelector('#rd-delete').addEventListener('click', () => setHerramienta(herramienta === 'delete' ? null : 'delete'));
   panel.querySelector('#rd-draw').addEventListener('click', () => setHerramienta(herramienta === 'draw' ? null : 'draw'));

@@ -51,5 +51,5 @@
 
   UC.actualizarEstado();
   el('info-bar').classList.add('oculto');
-  UC.ui.instruccion('Cargá una red vial o abrí un proyecto / sesión para comenzar');
+  UC.ui.instruccion('Carga una red vial o abre un proyecto / sesión para comenzar');
 })();

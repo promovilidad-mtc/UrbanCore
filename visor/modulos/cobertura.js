@@ -44,7 +44,7 @@
   const res = document.createElement('div');
   res.innerHTML = `<div class="res-section">
       <h2>Análisis de proyecto</h2>
-      <div id="cb-res"><div class="hint">Cargá un proyecto o elegí una ruta como corredor.</div></div>
+      <div id="cb-res"><div class="hint">Carga un proyecto o elige una ruta como corredor.</div></div>
       <button class="btn primary" id="cb-rep-proy" style="width:100%;justify-content:center;margin-top:10px;display:none"><i class="fa-solid fa-clipboard-list"></i> Reporte del proyecto</button>
     </div>`;
 
@@ -184,7 +184,7 @@
   }
   function renderResultados(){
     const box = el('cb-res');
-    if(!corredores.length){ box.innerHTML = '<div class="hint">Cargá un proyecto o elegí una ruta como corredor.</div>'; return; }
+    if(!corredores.length){ box.innerHTML = '<div class="hint">Carga un proyecto o elige una ruta como corredor.</div>'; return; }
     if(!UC.rutas.cantidad()){ box.innerHTML = '<div class="hint">No hay rutas en el proyecto para comparar con el corredor.</div>'; return; }
     const v = el('cb-sel').value;
     box.innerHTML = (v === 'todos' ? corredores.map((c, i) => bloqueCorredor(c, itemsDe(c), c.color)) : [bloqueCorredor(corredores[+v], itemsDe(corredores[+v]), corredores[+v].color)]).join('');

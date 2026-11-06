@@ -56,7 +56,7 @@
       desdeTramo:si => [si],
       avisar(){ UC.eventos.emit('red:atributos', {}); },
       ayuda:'Clic sobre un tramo para ver y editar sus datos. Lo editado se guarda con el proyecto y sale en <b>Exportar → Red vial GeoJSON</b>.',
-      vacioCon:'Clic sobre un tramo del mapa para ver sus datos, o abrí la tabla.', vacioSin:''
+      vacioCon:'Clic sobre un tramo del mapa para ver sus datos, o abre la tabla.', vacioSin:''
     },
     rutas:{
       nombre:'Rutas', plural:'rutas', ninguno:'Ese tramo no es parte de ninguna ruta.',
@@ -75,7 +75,7 @@
       desdeTramo:si => UC.rutas.lista().filter(r => pasaPor(r, si)),
       avisar(){ UC.rutas.refrescar(); propio = true; UC.eventos.emit('rutas:cambiadas', {}); propio = false; UC.actualizarEstado(); },
       ayuda:'Clic sobre cualquier tramo de una ruta la elige completa. Los campos propios salen en <b>Exportar → Rutas GeoJSON</b>.',
-      vacioCon:'Clic sobre un tramo de una ruta para elegirla completa, o abrí la tabla.', vacioSin:'Todavía no hay rutas: crealas en el módulo Rutas.'
+      vacioCon:'Clic sobre un tramo de una ruta para elegirla completa, o abre la tabla.', vacioSin:'Todavía no hay rutas: créalas en el módulo Rutas.'
     },
     corredores:{
       nombre:'Corredores', plural:'corredores', ninguno:'Ese tramo no es parte de ningún corredor.',
@@ -94,7 +94,7 @@
       desdeTramo:si => UC.cobertura.lista().filter(c => c.todos.has(si.segId)),
       avisar(){ UC.cobertura.refrescar(); },
       ayuda:'Corredores cargados en el módulo Cobertura. Clic sobre un tramo del corredor para elegirlo.',
-      vacioCon:'Clic sobre un tramo de un corredor para elegirlo completo, o abrí la tabla.', vacioSin:'No hay corredores: cargalos en el módulo Cobertura.'
+      vacioCon:'Clic sobre un tramo de un corredor para elegirlo completo, o abre la tabla.', vacioSin:'No hay corredores: cárgalos en el módulo Cobertura.'
     },
     paraderos:{
       nombre:'Paraderos', plural:'paraderos', ninguno:'No hay paraderos en ese tramo.',
@@ -115,7 +115,7 @@
       desdeTramo:si => UC.paraderos.lista().filter(p => p.segId === si.segId),
       avisar(){ propio = true; UC.paraderos.refrescar(); propio = false; },
       ayuda:'Paraderos del módulo Paraderos: existentes (con los datos de su archivo) y propuestos. Clic sobre un tramo para ver los que tiene.',
-      vacioCon:'Clic sobre un tramo con paraderos para verlos, o abrí la tabla.', vacioSin:'No hay paraderos: cargalos o proponelos en el módulo Paraderos.'
+      vacioCon:'Clic sobre un tramo con paraderos para verlos, o abre la tabla.', vacioSin:'No hay paraderos: cárgalos o proponlos en el módulo Paraderos.'
     }
   };
 
@@ -243,7 +243,7 @@
     const ks = campos(capa);
     const sep = document.createElement('div'); sep.className = 'at-sep'; box.appendChild(sep);
     if(ks.length) ks.forEach(k => box.appendChild(fila(k, controlCampo(sel, k, 'ficha'))));
-    else { const h = document.createElement('div'); h.className = 'hint'; h.textContent = 'Sin campos propios todavía. Agregá uno abajo.'; box.appendChild(h); }
+    else { const h = document.createElement('div'); h.className = 'hint'; h.textContent = 'Sin campos propios todavía. Agrega uno abajo.'; box.appendChild(h); }
     box.appendChild(filaAgregar());
     const acc = document.createElement('div'); acc.className = 'list-actions'; acc.style.marginTop = '12px';
     const bz = document.createElement('button'); bz.className = 'btn'; bz.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Centrar';
@@ -421,7 +421,7 @@
   el('at-m-campo').addEventListener('change', cambiarCampoMasivo);
   tabla.querySelector('#at-t-masivo-btn').addEventListener('click', () => {
     const m = el('at-masivo'); m.hidden = !m.hidden;
-    if(!m.hidden){ llenarMasivo(); if(!el('at-m-campo').options.length) UC.ui.instruccion('Agregá un campo primero (ficha de la izquierda).'); }
+    if(!m.hidden){ llenarMasivo(); if(!el('at-m-campo').options.length) UC.ui.instruccion('Agrega un campo primero (ficha de la izquierda).'); }
   });
   tabla.querySelector('#at-m-aplicar').addEventListener('click', () => {
     const C = CAPAS[capa], key = el('at-m-campo').value, items = filas.map(x => x.it);

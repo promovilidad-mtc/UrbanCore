@@ -85,7 +85,7 @@
   /* ── Clic en segmento (trazar / quitar) ── */
   function handleSegmentClick(segId){
     if(!traceMode) return;
-    if(!activeRouteId){ alert('Seleccioná una ruta en el panel izquierdo.'); return; }
+    if(!activeRouteId){ alert('Selecciona una ruta en el panel izquierdo.'); return; }
     const r = routes.find(x => x.id === activeRouteId); if(!r) return;
     const arr = r[activeVariant];
     if(deleteMode){
@@ -94,7 +94,7 @@
       arr.splice(idx, 1);
       pushUndo({ routeId:activeRouteId, variant:activeVariant, segId, action:'delete' });
       refreshSeg(segId); updateInfoBar(); renderRoutesPanel(); cambio();
-      UC.ui.instruccion('Segmento quitado. Podés deshacer con el botón de la barra.');
+      UC.ui.instruccion('Segmento quitado. Puedes deshacer con el botón de la barra.');
       return;
     }
     if(arr.find(s => s.segId === segId)){ UC.ui.instruccion('Segmento ya está en esta variante.'); return; }
@@ -140,7 +140,7 @@
     el('rt-delete').disabled = false;
     el('rt-undo').disabled = !undoStack.length; el('rt-redo').disabled = !redoStack.length;
     updateInfoBar();
-    UC.ui.instruccion('Clic sobre segmentos para trazar · arrastrá para navegar');
+    UC.ui.instruccion('Clic sobre segmentos para trazar · arrastra para navegar');
   }
   function disableTrace(){
     traceMode = false; deleteMode = false;
@@ -179,7 +179,7 @@
     actualizarBtnOcultar();
     const list = el('routes-list');
     if(!routes.length){
-      list.innerHTML = '<div class="empty-hint"><span class="ico"><i class="fa-solid fa-pen"></i></span>Agregá una ruta arriba para empezar a trazar.</div>';
+      list.innerHTML = '<div class="empty-hint"><span class="ico"><i class="fa-solid fa-pen"></i></span>Agrega una ruta arriba para empezar a trazar.</div>';
       return;
     }
     list.innerHTML = '';
@@ -280,7 +280,7 @@
     paletteIdx = (paletteIdx + 1) % PALETTE.length;
     el('new-route-color').value = PALETTE[paletteIdx];
     selectRoute(id, 'ida'); cambio();
-    UC.ui.instruccion(`Ruta "${nombre}" creada — activá Trazar para empezar`);
+    UC.ui.instruccion(`Ruta "${nombre}" creada — activa Trazar para empezar`);
   });
   panel.querySelector('#new-route-name').addEventListener('keydown', e => { if(e.key === 'Enter') el('btn-add-route').click(); });
 
@@ -356,7 +356,7 @@
     activar(){
       el('info-bar').classList.remove('oculto');
       renderRoutesPanel(); updateInfoBar();
-      if(traceMode) enableTrace(); else UC.ui.instruccion(routes.length ? 'Seleccioná una ruta y activá Trazar' : 'Creá una ruta en el panel y activá Trazar');
+      if(traceMode) enableTrace(); else UC.ui.instruccion(routes.length ? 'Selecciona una ruta y activa Trazar' : 'Crea una ruta en el panel y activa Trazar');
     },
     desactivar(){ if(traceMode) disableTrace(); el('info-bar').classList.add('oculto'); },
     hoverTramos:() => traceMode,

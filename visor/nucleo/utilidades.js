@@ -40,7 +40,7 @@ UC.ui = {
   cerrarReporte(){ UC.el('report-bg').classList.remove('show'); },
   async copiar(texto, boton){
     try { await navigator.clipboard.writeText(texto); }
-    catch (_) { prompt('Copiá el texto:', texto); return; }
+    catch (_) { prompt('Copia el texto:', texto); return; }
     if (boton) { const o = boton.innerHTML; boton.innerHTML = '<i class="fa-solid fa-check"></i> Copiado'; setTimeout(() => boton.innerHTML = o, 1800); }
   }
 };

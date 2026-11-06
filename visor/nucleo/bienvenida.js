@@ -18,9 +18,9 @@
       <div class="bv-logo">UrbanCore <span>Visor</span></div>
       <div class="bv-sub">Planificación de rutas de transporte sobre la red vial · PROMOVILIDAD / MTC</div>
       <div class="bv-pasos">
-        <div class="bv-paso"><div class="bv-num">1</div><i class="fa-solid fa-map"></i><b>Cargá la red vial</b><span>Shapefile .zip, GeoJSON, KML o KMZ. Se corta sola en las esquinas.</span></div>
-        <div class="bv-paso"><div class="bv-num">2</div><i class="fa-solid fa-route"></i><b>Trazá y clasificá</b><span>Rutas tramo a tramo, edición de la red y jerarquía vial.</span></div>
-        <div class="bv-paso"><div class="bv-num">3</div><i class="fa-solid fa-magnifying-glass-chart"></i><b>Analizá y exportá</b><span>Superposición, cobertura, paraderos, atributos, Excel y GeoJSON.</span></div>
+        <div class="bv-paso"><div class="bv-num">1</div><i class="fa-solid fa-map"></i><b>Carga la red vial</b><span>Shapefile .zip, GeoJSON, KML o KMZ. Se corta sola en las esquinas.</span></div>
+        <div class="bv-paso"><div class="bv-num">2</div><i class="fa-solid fa-route"></i><b>Traza y clasifica</b><span>Rutas tramo a tramo, edición de la red y jerarquía vial.</span></div>
+        <div class="bv-paso"><div class="bv-num">3</div><i class="fa-solid fa-magnifying-glass-chart"></i><b>Analiza y exporta</b><span>Superposición, cobertura, paraderos, atributos, Excel y GeoJSON.</span></div>
       </div>
       <div class="bv-recuperar" id="bv-recuperar" hidden>
         <i class="fa-solid fa-clock-rotate-left"></i>
@@ -33,7 +33,7 @@
         <button class="btn" id="bv-abrir"><i class="fa-solid fa-folder-open"></i> Abrir proyecto</button>
         <button class="btn" id="bv-demo" hidden><i class="fa-solid fa-play"></i> Ver proyecto de ejemplo</button>
       </div>
-      <div class="bv-pie">También podés arrastrar un archivo a cualquier parte de la ventana.</div>
+      <div class="bv-pie">También puedes arrastrar un archivo a cualquier parte de la ventana.</div>
     </div>`;
   document.body.appendChild(caja);
 
@@ -60,7 +60,7 @@
       await abrirTexto(await r.text(), 'proyecto-demo.json');
     }catch(e){
       UC.ui.ocultarLoader(); mostrar(!UC.red.cargada());
-      alert('No se pudo abrir el proyecto de ejemplo: ' + e.message + (location.protocol === 'file:' ? '\n\nAbrí el visor desde la web (GitHub Pages o localhost), no con doble clic.' : ''));
+      alert('No se pudo abrir el proyecto de ejemplo: ' + e.message + (location.protocol === 'file:' ? '\n\nAbre el visor desde la web (GitHub Pages o localhost), no con doble clic.' : ''));
     }
   }
   el('bv-demo').addEventListener('click', cargarDemo);

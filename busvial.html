@@ -76,11 +76,12 @@
   .breadcrumb{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-sec);font-weight:400;}
   .breadcrumb a{color:var(--text-sec);text-decoration:none;transition:.15s;}
   .breadcrumb a:hover{color:var(--blue);}
+  .btn-atras{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 14px 0 11px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text)!important;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}.btn-atras i{font-size:12px}.btn-atras:hover{background:var(--blue-lt);border-color:var(--blue);color:var(--blue)!important}
   .topbar-divider{width:1px;height:20px;background:rgba(0,0,0,.1);margin:0 2px;flex-shrink:0;}
   .logo{font-size:15px;font-weight:700;color:var(--blue);letter-spacing:-0.4px;white-space:nowrap;}
   .logo span{color:var(--text);}
   .nav-tabs{display:flex;gap:3px;flex:1;overflow-x:auto;background:rgba(255,255,255,.35);padding:4px;border-radius:999px;border:1px solid var(--glass-border-soft);backdrop-filter:blur(14px) saturate(1.6);-webkit-backdrop-filter:blur(14px) saturate(1.6);box-shadow:0 2px 8px rgba(0,0,0,.06) inset;}
-  .tab{padding:6px 13px;font-size:12.5px;font-weight:500;color:var(--text-sec);cursor:pointer;border-radius:999px;border:none;background:transparent;transition:all 0.15s;white-space:nowrap;font-family:var(--font);}
+  .tab{padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--text-sec);cursor:pointer;border-radius:999px;border:none;background:transparent;transition:all 0.15s;white-space:nowrap;font-family:var(--font);}
   .tab:hover{background:rgba(255,255,255,.7);color:var(--text);}
   .tab.active{background:linear-gradient(180deg, rgba(64,150,255,.95), rgba(0,110,235,.95));color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(0,102,204,.35);}
   .tab.disabled{opacity:0.4;cursor:default;pointer-events:none;}
@@ -254,7 +255,7 @@
   .sm-sub{font-size:13px;color:var(--text-sec);margin-bottom:28px;}
   .sm-btn{display:flex;align-items:center;gap:14px;width:100%;padding:15px 18px;border-radius:14px;border:1px solid var(--glass-border-soft);background:rgba(255,255,255,.5);backdrop-filter:blur(8px);cursor:pointer;text-align:left;transition:all 0.15s;margin-bottom:10px;font-family:var(--font);}
   .sm-btn:hover{border-color:var(--blue);background:rgba(232,242,255,.75);}
-  .sm-btn-icon{font-size:24px;flex-shrink:0;}
+  .sm-btn-icon{width:42px;height:42px;border-radius:50%;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
   .sm-btn-title{font-size:13px;font-weight:600;color:var(--text);}
   .sm-btn-desc{font-size:12px;color:var(--text-sec);margin-top:2px;}
 </style>
@@ -460,7 +461,7 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 <div class="topbar">
   <div class="topbar-left">
     <div class="breadcrumb">
-      <a href="index.html">‹ UrbanCore</a>
+      <a class="btn-atras" href="index.html" title="Volver al inicio de UrbanCore"><i class="fa-solid fa-arrow-left"></i> Atrás</a>
     </div>
     <div class="topbar-divider"></div>
     <div class="logo">Bus<span>Core</span></div>
@@ -975,7 +976,7 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
       <input type="file" accept=".json" class="hidden" onchange="wmCargar(event)">
     </label>
     <div id="wm-error" style="font-size:12px;color:#FF3B30;margin-top:8px;display:none"></div>
-    <a href="index.html" style="font-size:12px;color:var(--text-tert);text-decoration:none;margin-top:8px;display:inline-block"><i class="fa-solid fa-arrow-left"></i> Volver a UrbanCore</a>
+    <a href="index.html" style="font-size:12px;color:var(--text-sec);text-decoration:none;margin-top:8px;display:inline-block"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
   </div>
 </div>
 
