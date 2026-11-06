@@ -966,6 +966,10 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
   <div id="session-modal">
     <div class="sm-title">Bus<span>Core</span></div>
     <div class="sm-sub">Análisis de ocupación visual y demanda lineal de carril bus</div>
+    <button class="sm-btn" id="wm-continuar" style="display:none" onclick="wmContinuar()">
+      <div class="sm-btn-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div><div class="sm-btn-title">Continuar análisis anterior</div><div class="sm-btn-desc" id="wm-continuar-desc">Recuperar lo último guardado en este navegador</div></div>
+    </button>
     <button class="sm-btn" onclick="wmNuevo()">
       <div class="sm-btn-icon"><i class="fa-solid fa-clipboard-list"></i></div>
       <div><div class="sm-btn-title">Nuevo análisis</div><div class="sm-btn-desc">Empezar desde cero con la configuración por defecto</div></div>
@@ -1098,6 +1102,9 @@ function markDirty(){
   autoSaveTimer=setTimeout(autoSave,1500);
 }
 function autoSave(){
+  // Mientras la ventana de inicio está abierta no se guarda: así no se pisa el análisis anterior
+  const _ovIni=document.getElementById('session-overlay');
+  if(_ovIni && _ovIni.classList.contains('show')) return;
   readFormToState();
   guardarBV();
 }
@@ -1107,6 +1114,7 @@ function guardarBV(){
   const dot=document.getElementById('save-dot'), lbl=document.getElementById('save-label');
   try{
     localStorage.setItem('busvial_v1',JSON.stringify(S));
+    try{ localStorage.setItem('busvial_v1_fecha',String(Date.now())); }catch(_){}
     isDirty=false; dot.className='save-dot'; lbl.textContent='Guardado';
     return true;
   }catch(e){
@@ -3176,7 +3184,10 @@ function wmCerrar(){
   if(ov){ov.style.opacity='0';ov.style.transition='opacity 0.2s';setTimeout(()=>{ov.classList.remove('show');ov.style.opacity='';},220);}
 }
 function wmNuevo(){
+  if(localStorage.getItem('busvial_v1') &&
+     !confirm('Hay un análisis guardado en este navegador. Empezar uno nuevo lo borra (si ya lo exportaste a JSON, no pasa nada). ¿Empezar uno nuevo?')) return;
   localStorage.removeItem('busvial_v1');
+  localStorage.removeItem('busvial_v1_fecha');
   wmCerrar();notify('Nuevo análisis iniciado <i class="fa-solid fa-check"></i>');
 }
 
@@ -3301,22 +3312,26 @@ function recalcNextId(){
   fovNextId=(ids.length?Math.max(...ids):0)+1;
 }
 
-// Iniciar — restaura el autoguardado solo, sin preguntar. El modal de bienvenida
-// (Nuevo análisis / Cargar sesión) solo aparece si NO hay nada guardado — así,
-// si la página se recarga sola (recarga del navegador, pestaña descartada por
-// ahorro de memoria, etc.), no hace falta ningún clic para recuperar el trabajo.
+// Iniciar — igual que AforoCore: siempre se muestra la ventana de inicio
+// (Continuar / Nuevo análisis / Cargar sesión). Si hay un autoguardado, aparece
+// "Continuar análisis anterior"; si la página se recargó sola, basta un clic
+// para recuperar el trabajo (el autoguardado no se toca hasta elegir).
 renderAll();
 recalcNextId();
 const _ov=document.getElementById('session-overlay');
-let _restaurado=false;
+if(_ov) _ov.classList.add('show');
 try{
   const _raw=localStorage.getItem('busvial_v1');
   if(_raw){
-    wmContinuar(); // aplica el mismo parseo/migración y hace renderAll()
-    _restaurado=true;
+    const _d=JSON.parse(_raw);
+    let _txt=(_d.gen&&_d.gen.corredor)||'Análisis sin nombre';
+    if(_d.gen&&_d.gen.tramo) _txt+=' ('+_d.gen.tramo+')';
+    const _f=+localStorage.getItem('busvial_v1_fecha');
+    if(_f) _txt+=', guardado el '+new Date(_f).toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('wm-continuar-desc').textContent=_txt;
+    document.getElementById('wm-continuar').style.display='';
   }
-}catch(ex){/* autoguardado corrupto: cae al modal de bienvenida */}
-if(!_restaurado && _ov) _ov.classList.add('show');
+}catch(ex){ console.error('Autoguardado ilegible:',ex); }
 </script>
 
 <script>
