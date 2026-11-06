@@ -17,13 +17,18 @@
   // Mismos tipos que excluye la preparación de red (nucleo/red.js → HIGHWAY_EXCLUIDOS),
   // así lo descargado es igual a una exportación de OSM cargada a mano.
   const EXCLUIDOS = 'footway|pedestrian|steps|service|path|cycleway|bridleway|corridor|elevator|platform|construction|proposed|abandoned|razed|disused|raceway|bus_stop';
+  // Servidores públicos de Overpass: si uno está saturado se prueba el siguiente
   const SERVIDORES = [
     'https://overpass-api.de/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
     'https://overpass.private.coffee/api/interpreter'
   ];
   const KM2_AVISO = 500, KM2_MAX = 1500;     // zona grande: avisar / no permitir
-  const ESPERA_MS = 180000;                  // máximo por servidor
+  const ESPERA_MS = 90000;                   // máximo para el servidor principal
+  const ESPERA_RESPALDO_MS = 60000;          // máximo para los de respaldo
+  const PAUSAS_S = [20, 45];                 // si todos están saturados: esperar y dar otra vuelta (3 vueltas en total)
+  let cancelacion = null;                    // AbortController de la descarga en curso (botón Cancelar)
 
   let lugar = '';            // nombre corto del último lugar buscado (para el nombre del archivo)
   let ultimaRed = null;      // FeatureCollection descargada (para "Guardar red")
@@ -148,24 +153,64 @@
   }
 
   /* ── Descargar (Overpass) ── */
+  const CANCELADO = 'cancelado';
+  // Botón "Cancelar" dentro del aviso de carga (solo mientras se descarga de OSM)
+  function botonCancelar(ver){
+    let b = document.getElementById('osm-cancelar');
+    if(ver && !b){
+      b = document.createElement('button');
+      b.id = 'osm-cancelar'; b.className = 'btn'; b.textContent = 'Cancelar';
+      b.addEventListener('click', () => { if(cancelacion) cancelacion.abort(); });
+      el('loader-text').parentElement.appendChild(b);
+    }else if(!ver && b) b.remove();
+  }
+  // Espera abortable con cuenta regresiva en el aviso de carga
+  function pausa(seg, texto, senal){
+    return new Promise((ok, mal) => {
+      let s = seg;
+      const tic = () => { UC.ui.loader(texto.replace('{s}', s)); if(s-- <= 0){ clearInterval(iv); ok(); } };
+      const iv = setInterval(tic, 1000); tic();
+      senal.addEventListener('abort', () => { clearInterval(iv); mal(new Error(CANCELADO)); }, { once:true });
+    });
+  }
+
   async function consultar(z){
-    const q = `[out:json][timeout:170];way["highway"]["highway"!~"^(${EXCLUIDOS})$"](${z.s.toFixed(6)},${z.w.toFixed(6)},${z.n.toFixed(6)},${z.e.toFixed(6)});out geom;`;
+    const q = `[out:json][timeout:90];way["highway"]["highway"!~"^(${EXCLUIDOS})$"](${z.s.toFixed(6)},${z.w.toFixed(6)},${z.n.toFixed(6)},${z.e.toFixed(6)});out geom;`;
+    const global = cancelacion = new AbortController();
+    const vueltas = PAUSAS_S.length + 1;
     let ultimoError = null;
-    for(let i = 0; i < SERVIDORES.length; i++){
-      UC.ui.loader(i === 0 ? 'Descargando la red de OpenStreetMap… (puede tardar hasta 2 minutos)'
-                           : `Servidor ocupado, probando otro (${i + 1} de ${SERVIDORES.length})…`);
-      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ESPERA_MS);
-      try{
-        const r = await fetch(SERVIDORES[i], { method:'POST', body:'data=' + encodeURIComponent(q),
-          headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:ctl.signal });
-        if(!r.ok) throw new Error('el servidor respondió ' + r.status);
-        const d = await r.json();
-        if(d.remark && /error/i.test(d.remark)) throw new Error(d.remark);
-        return d;
-      }catch(err){ ultimoError = err; console.warn('Overpass', SERVIDORES[i], err); }
-      finally{ clearTimeout(t); }
+    const colgados = new Set();   // servidores que no respondieron a tiempo: no se reintentan en otra vuelta
+    for(let v = 0; v < vueltas; v++){
+      for(let i = 0; i < SERVIDORES.length; i++){
+        if(global.signal.aborted) throw new Error(CANCELADO);
+        if(colgados.has(i)) continue;
+        UC.ui.loader(v === 0 && i === 0
+          ? 'Descargando la red de OpenStreetMap… (puede tardar hasta 2 minutos)'
+          : `Servidor ocupado, probando otro (${i + 1} de ${SERVIDORES.length}${v ? ` · vuelta ${v + 1} de ${vueltas}` : ''})…`);
+        // El principal tiene más margen (una ciudad grande tarda ~40 s); los de respaldo, menos
+        const ctl = new AbortController(), t = setTimeout(() => { ctl.abort(); colgados.add(i); }, i === 0 ? ESPERA_MS : ESPERA_RESPALDO_MS);
+        const alCancelar = () => ctl.abort();
+        global.signal.addEventListener('abort', alCancelar, { once:true });
+        try{
+          const r = await fetch(SERVIDORES[i], { method:'POST', body:'data=' + encodeURIComponent(q),
+            headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:ctl.signal });
+          if(!r.ok) throw new Error('el servidor respondió ' + r.status);
+          const d = await r.json();
+          if(d.remark && /error/i.test(d.remark)) throw new Error(d.remark);
+          return d;
+        }catch(err){
+          if(global.signal.aborted) throw new Error(CANCELADO);
+          ultimoError = err; console.warn('Overpass', SERVIDORES[i], err);
+        }finally{ clearTimeout(t); global.signal.removeEventListener('abort', alCancelar); }
+      }
+      if(colgados.size === SERVIDORES.length) break;   // ninguno responde: no tiene sentido esperar otra vuelta
+      if(v < vueltas - 1)
+        await pausa(PAUSAS_S[v], `Los servidores de OpenStreetMap están saturados. Reintentando en {s} s… (vuelta ${v + 2} de ${vueltas})`, global.signal);
     }
-    throw new Error('No se pudo descargar de OpenStreetMap (' + (ultimoError && ultimoError.name === 'AbortError' ? 'tardó demasiado' : (ultimoError && ultimoError.message) || 'sin respuesta') + '). Revisa la conexión, prueba una zona más chica o inténtalo en unos minutos.');
+    const sinRed = navigator.onLine === false;
+    throw new Error(sinRed
+      ? 'No hay conexión a internet. Conéctate e inténtalo de nuevo.'
+      : 'Los servidores públicos de OpenStreetMap están saturados en este momento (no es tu conexión ni la app).\n\nInténtalo de nuevo en unos minutos, o prueba con una zona más chica.\n\nDetalle: ' +(ultimoError && ultimoError.name === 'AbortError' ? 'tardaron demasiado en responder' : (ultimoError && ultimoError.message) || 'sin respuesta'));
   }
 
   function aGeoJSON(d){
@@ -190,13 +235,15 @@
     if(z.km2 > KM2_AVISO && !confirm(`La zona tiene ≈ ${U.fmtNum(Math.round(z.km2))} km² y puede tardar varios minutos.\n\n¿Descargar igual?`)) return;
     descargando = true; actualizarZona(); el('osm-ok').hidden = true;
     let fc = null;
+    botonCancelar(true);
     try{
       fc = aGeoJSON(await consultar(z));
     }catch(err){
-      UC.ui.ocultarLoader(); descargando = false; actualizarZona();
+      botonCancelar(false); UC.ui.ocultarLoader(); descargando = false; cancelacion = null; actualizarZona();
+      if(err.message === CANCELADO){ UC.ui.instruccion('Descarga de OpenStreetMap cancelada'); return; }
       alert(err.message); return;
     }
-    UC.ui.ocultarLoader(); descargando = false; actualizarZona();
+    botonCancelar(false); UC.ui.ocultarLoader(); descargando = false; cancelacion = null; actualizarZona();
     if(!fc.features.length){ alert('En esta zona no hay vías mapeadas en OpenStreetMap. Mueve el mapa a la ciudad e inténtalo de nuevo.'); return; }
 
     // Se entrega como un archivo GeoJSON normal: mismo camino que el botón "Red vial"

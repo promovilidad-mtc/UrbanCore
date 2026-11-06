@@ -531,4 +531,5 @@ body.at-tabla-on #capas-panel{bottom:calc(var(--at-h) + 66px)}
 .osm-ok i.fa-circle-check{color:#1e8e3e}
 .osm-ok > span{font-size:11.5px;color:var(--text-2)}
 .osm-pie{font-size:11px;color:var(--text-2);line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
+#osm-cancelar{margin-left:6px}
 @media (max-width:720px){#osm-panel{left:12px;right:12px;width:auto}}
