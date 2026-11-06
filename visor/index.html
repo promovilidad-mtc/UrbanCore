@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UrbanCore Visor — PROMOVILIDAD / MTC</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- Librerías locales (carpeta ../vendor/) para trabajar sin internet; si no están, se usan las del CDN -->
+<link rel="stylesheet" href="../vendor/leaflet/leaflet.css" onerror="this.onerror=null;this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'" />
+<link rel="stylesheet" href="../vendor/fontawesome/css/all.min.css" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'" />
 <link rel="stylesheet" href="estilos.css" />
 <script>
 /* Tema visual: por defecto el piloto "Google" (tema-google.css). Para ver el diseño anterior: index.html?tema=glass
@@ -99,13 +100,19 @@
   </div>
 </div>
 
-<!-- Librerías -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/proj4@2.10.0/dist/proj4.js"></script>
-<script src="https://unpkg.com/shpjs@6.2.0/dist/shp.min.js"></script>
-<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://unpkg.com/togeojson@0.16.0/togeojson.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<!-- Librerías: primero la copia local (../vendor/, funciona sin internet); si falta, la del CDN (mismas versiones) -->
+<script src="../vendor/leaflet/leaflet.js"></script>
+<script>window.L||document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');</script>
+<script src="../vendor/proj4/proj4.js"></script>
+<script>window.proj4||document.write('<script src="https://unpkg.com/proj4@2.10.0/dist/proj4.js"><\/script>');</script>
+<script src="../vendor/shpjs/shp.min.js"></script>
+<script>window.shp||document.write('<script src="https://unpkg.com/shpjs@6.2.0/dist/shp.min.js"><\/script>');</script>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script>window.JSZip||document.write('<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"><\/script>');</script>
+<script src="../vendor/togeojson/togeojson.js"></script>
+<script>window.toGeoJSON||document.write('<script src="https://unpkg.com/togeojson@0.16.0/togeojson.js"><\/script>');</script>
+<script src="../vendor/xlsx/xlsx.full.min.js"></script>
+<script>window.XLSX||document.write('<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"><\/script>');</script>
 
 <!-- Núcleo -->
 <script src="nucleo/utilidades.js"></script>

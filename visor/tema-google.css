@@ -5,7 +5,7 @@
 
    Bordes: por defecto gris fino (#dadce0), como Google Maps.
    Si los quieres negros, cambia solo --g-borde a #202124 (más abajo). */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url('../vendor/roboto/roboto.css');   /* Roboto local (sin internet); si falta, se usa la fuente del sistema */
 
 /* Modo oscuro: botón luna/sol en la barra superior (solo con este tema). Se recuerda en el navegador.
    Para abrirlo oscuro directamente: visor/index.html?tema=oscuro */
