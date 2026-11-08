@@ -232,6 +232,31 @@
     }
     return best;
   };
+  // Todos los tramos a menos de maxM metros de una coordenada, con la distancia y la dirección
+  // (vector unitario en metros: ux este, uy norte) del pedazo más cercano. Lo usa Importar para
+  // pegar líneas de otra fuente solo a calles que vayan en la misma dirección.
+  R.candidatosMetros = function(lat, lng, maxM){
+    const kx = 111320 * Math.cos(lat * Math.PI / 180), ky = 110540;
+    const x0 = Math.floor((lng - maxM / kx) / GRID), x1 = Math.floor((lng + maxM / kx) / GRID);
+    const y0 = Math.floor((lat - maxM / ky) / GRID), y1 = Math.floor((lat + maxM / ky) / GRID);
+    const vistos = new Set(), out = [];
+    for(let x = x0; x <= x1; x++) for(let y = y0; y <= y1; y++){
+      const arr = segGrid.get(gridKey(x, y)); if(!arr) continue;
+      for(const si of arr){
+        if(vistos.has(si)) continue; vistos.add(si);
+        const ll = si.latlngs; let minD = maxM, ux = 0, uy = 0;
+        for(let i = 1; i < ll.length; i++){
+          const ax = (ll[i-1][1] - lng) * kx, ay = (ll[i-1][0] - lat) * ky, bx = (ll[i][1] - lng) * kx, by = (ll[i][0] - lat) * ky;
+          const dx = bx - ax, dy = by - ay, len2 = dx*dx + dy*dy;
+          const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, -(ax*dx + ay*dy) / len2));
+          const d = Math.hypot(ax + t*dx, ay + t*dy);
+          if(d < minD && len2 > 0){ minD = d; const L = Math.sqrt(len2); ux = dx / L; uy = dy / L; }
+        }
+        if(minD < maxM) out.push({ si, d:minD, ux, uy });
+      }
+    }
+    return out;
+  };
 
   /* ── Estilo de la red base (con caché: solo se redibuja lo que cambia) ── */
   R.estiloTramo = function(si, st){

@@ -40,6 +40,8 @@
         <input type="color" id="new-route-color" class="color-swatch" value="#7c3aed" title="Color de ruta">
         <button class="btn primary btn-add-route" id="btn-add-route">+</button>
       </div>
+      <button class="btn rt-importar" id="rt-importar" title="Traer rutas existentes de un GeoJSON, Shapefile .zip, KML o KMZ (cualquier campo) y ubicarlas sobre la red"><i class="fa-solid fa-file-import"></i> Importar rutas (GeoJSON, SHP, KML)</button>
+      <input type="file" id="rt-imp-file" accept=".geojson,.json,.zip,.kml,.kmz" style="display:none">
     </div>
     <div class="panel-routes"><div id="routes-list"></div></div>`;
 
@@ -283,6 +285,41 @@
     UC.ui.instruccion(`Ruta "${nombre}" creada — activa Trazar para empezar`);
   });
   panel.querySelector('#new-route-name').addEventListener('keydown', e => { if(e.key === 'Enter') el('btn-add-route').click(); });
+
+  /* ── Importar rutas de otra fuente (GeoJSON / SHP / KML con cualquier campo) ──
+     El archivo se lee, se pregunta nombre y sentido (nucleo/importar.js) y cada línea se ubica en los
+     tramos de la red. Quedan como rutas normales: {segId} por tramo y los campos del archivo en r.atributos. */
+  async function importarArchivo(file){
+    let datos;
+    UC.ui.loader('Leyendo rutas…'); await UC.ui.esperarFrame();
+    try{ datos = await UC.importar.leer(file); }
+    catch(err){ UC.ui.ocultarLoader(); alert('Error: ' + err.message); return; }
+    UC.ui.ocultarLoader();
+    const cfg = await UC.importar.dialogo(datos, { destino:'rutas', hayRutas:routes.length > 0 });
+    let res;
+    try{ res = await UC.importar.calzar(datos, cfg, { etiqueta:'Ruta' }); }
+    catch(err){ alert('Error al ubicar las rutas: ' + err.message); console.error(err); return; }
+    if(traceMode) disableTrace();
+    if(cfg.reemplazar){ routes = []; activeRouteId = null; }
+    undoStack = []; redoStack = [];
+    const usados = new Set(routes.map(r => r.nombre)), base = Date.now().toString(36);
+    const nuevas = res.grupos.filter(g => g.ida.length || g.vuelta.length).map((g, i) => {
+      const r = { id:`r${base}_${i}`, nombre:UC.importar.nombreLibre(g.nombre, usados), color:g.color || PALETTE[(paletteIdx + i) % PALETTE.length],
+                  vis:true, visIda:true, visVuelta:true, ida:g.ida.map(segId => ({ segId })), vuelta:g.vuelta.map(segId => ({ segId })) };
+      if(Object.keys(g.atributos).length) r.atributos = g.atributos;
+      g.nombre = r.nombre; g.color = r.color;   // el reporte muestra la ruta tal como quedó
+      return r;
+    });
+    paletteIdx = (paletteIdx + nuevas.length) % PALETTE.length;
+    el('new-route-color').value = PALETTE[paletteIdx];
+    routes.push(...nuevas);
+    if(nuevas.length){ activeRouteId = nuevas[0].id; activeVariant = 'ida'; }
+    refreshAll(); renderRoutesPanel(); updateInfoBar(); cambio();
+    UC.importar.reporte(res, { titulo:'Rutas importadas', creadas:nuevas.length });
+    UC.ui.instruccion(nuevas.length ? `${nuevas.length} ruta${nuevas.length > 1 ? 's' : ''} importada${nuevas.length > 1 ? 's' : ''} desde ${datos.archivo}` : 'No se pudo ubicar ninguna ruta del archivo en la red');
+  }
+  panel.querySelector('#rt-importar').addEventListener('click', () => el('rt-imp-file').click());
+  panel.querySelector('#rt-imp-file').addEventListener('change', e => { const f = e.target.files[0]; if(f) importarArchivo(f); e.target.value = ''; });
 
   /* ── La red cambió: quitar de las rutas los tramos que ya no existen ── */
   UC.eventos.on('red:cambiada', ({ eliminados }) => {

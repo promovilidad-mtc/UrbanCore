@@ -12,6 +12,7 @@
   const CORRIDOR_COLORS = ['#1d4ed8','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777'];
   let corredores = [];            // [{nombre, color, ida:Set, vuelta:Set, todos:Set, kmIda, kmVuelta, kmTotal}]
   let verProyecto = true, verSuperposicion = true, activo = false, sinCalzar = 0;
+  let rutaFiltro = '';            // id de la ruta elegida para ver solo su superposición ('' = todas)
 
   const corrRenderer = UC.mapa.lienzo('corredorPane'), ovRenderer = UC.mapa.lienzo('overlapPane');
   const corrLayer = L.layerGroup(), ovLayer = L.layerGroup();
@@ -20,11 +21,14 @@
   panel.innerHTML = `
     <div class="panel-pad">
       <div class="modulo-titulo"><div class="ico"><i class="fa-solid fa-diagram-project"></i></div><span>Cobertura de proyectos</span></div>
-      <input type="file" id="cb-file" accept=".geojson,.json" style="display:none">
-      <button class="btn primary" id="cb-cargar" style="width:100%;justify-content:center;margin-bottom:8px"><i class="fa-solid fa-folder-open"></i> Cargar proyecto (RutaCore)</button>
+      <input type="file" id="cb-file" accept=".geojson,.json,.zip,.kml,.kmz" style="display:none">
+      <button class="btn primary" id="cb-cargar" style="width:100%;justify-content:center;margin-bottom:8px" title="Export de RutaCore, o cualquier GeoJSON, Shapefile .zip, KML o KMZ de líneas"><i class="fa-solid fa-folder-open"></i> Cargar proyecto (GeoJSON, SHP, KML)</button>
       <div class="field">
-        <label>…o usar una ruta del proyecto como corredor</label>
-        <select id="cb-desde-ruta"><option value="">— Elegir ruta —</option></select>
+        <label>Ver superposición de una ruta</label>
+        <div style="display:flex;gap:6px">
+          <select id="cb-ruta" style="flex:1;min-width:0"><option value="">Todas las rutas</option></select>
+          <button class="btn" id="cb-ruta-corr" title="Usar la ruta elegida como corredor (por ejemplo, una ruta propuesta dibujada aquí)" disabled><i class="fa-solid fa-plus"></i> Corredor</button>
+        </div>
       </div>
       <div id="cb-info" style="display:none">
         <div class="switch-row"><span>Mostrar corredor</span><label class="switch"><input type="checkbox" id="cb-chk-proy" checked><span class="track"></span></label></div>
@@ -35,7 +39,7 @@
         </div>
         <button class="btn" id="cb-quitar" style="width:100%;justify-content:center;margin-top:8px"><i class="fa-solid fa-xmark"></i> Quitar corredores</button>
       </div>
-      <div class="hint" style="margin-top:10px">El corredor es el proyecto (por ejemplo, un carril exclusivo) trazado en RutaCore y exportado como <b>Rutas GeoJSON</b>. Se calcula qué porcentaje del corredor recorre cada ruta existente.</div>
+      <div class="hint" style="margin-top:10px">El corredor es el proyecto (por ejemplo, un carril exclusivo): un export <b>Rutas GeoJSON</b> de RutaCore, o líneas de cualquier otra fuente (se pregunta el nombre y el sentido y se ubican en la red). Se calcula qué porcentaje del corredor recorre cada ruta existente; elige una ruta para ver solo la suya.</div>
       <div class="list-actions" style="margin-top:12px">
         <button class="btn" id="cb-rep-rutas"><i class="fa-solid fa-clipboard-list"></i> Reporte de rutas</button>
       </div>
@@ -60,9 +64,11 @@
     return UC.rutas.lista().map(r => {
       const ida = new Set(r.ida.map(s => s.segId).filter(id => UC.red.porId.has(id)));
       const vuelta = new Set(r.vuelta.map(s => s.segId).filter(id => UC.red.porId.has(id)));
-      return { cod:r.nombre, color:r.color, ida, vuelta, todos:new Set([...ida, ...vuelta]) };
+      return { id:r.id, cod:r.nombre, color:r.color, ida, vuelta, todos:new Set([...ida, ...vuelta]) };
     });
   }
+  // Rutas que se comparan con el corredor c: sin la ruta de la que salió el corredor y, si hay una elegida, solo esa
+  const rutasPara = (c, rs) => (rs || rutasSets()).filter(r => r.id !== c.ruta && (!rutaFiltro || r.id === rutaFiltro));
 
   /* ── Líneas del proyecto → tramos de la red ──
      1) exacto por geometría (export de RutaCore sobre la misma red)
@@ -95,12 +101,30 @@
 
   async function cargarArchivo(file){
     UC.ui.loader('Leyendo proyecto…'); await UC.ui.esperarFrame();
+    let datos;
+    try{ datos = await UC.importar.leer(file); }
+    catch(err){ UC.ui.ocultarLoader(); alert('Error: ' + err.message); return; }
+    const s0 = datos.feats[0].properties || {};
+    // Export de rutas de RutaCore / del visor: se abre directo, como siempre
+    if('ruta_id' in s0 && 'sentido' in s0){ cargarRutaCore(datos.feats); UC.ui.ocultarLoader(); return; }
+    // Cualquier otro archivo de líneas: se pregunta nombre y sentido y se ubica en la red
+    UC.ui.ocultarLoader();
+    const cfg = await UC.importar.dialogo(datos, { destino:'corredores' });
     try{
-      const gj = await UC.red.leerArchivoGeo(file);
-      const feats = (gj.features || []).filter(f => f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString'));
-      if(!feats.length) throw new Error('No se encontraron líneas en el archivo.');
-      const s0 = feats[0].properties || {};
-      if(!('ruta_id' in s0) || !('sentido' in s0)) throw new Error('El proyecto debe ser un export de rutas de RutaCore (con campos ruta_id y sentido).');
+      const res = await UC.importar.calzar(datos, cfg, { etiqueta:'Corredor' });
+      const usados = new Set();
+      corredores = res.grupos.filter(g => g.ida.length || g.vuelta.length).map((g, i) => {
+        const c = completar({ nombre:UC.importar.nombreLibre(g.nombre, usados),
+          atributos:Object.keys(g.atributos).length ? g.atributos : undefined, ida:new Set(g.ida), vuelta:new Set(g.vuelta) }, i);
+        g.nombre = c.nombre; g.color = c.color;   // el reporte muestra el corredor tal como quedó
+        return c;
+      });
+      despuesDeCargar();
+      UC.importar.reporte(res, { titulo:'Corredores cargados', singular:'corredor', plural:'corredores', creadas:corredores.length });
+    }catch(err){ alert('Error al ubicar el proyecto: ' + err.message); console.error(err); }
+  }
+  function cargarRutaCore(feats){
+    try{
       const grupos = new Map();
       feats.forEach(f => {
         const p = f.properties || {}, key = p.ruta_id || p.nombre_ruta || '?';
@@ -113,14 +137,21 @@
       if(sinCalzar) UC.ui.instruccion(`${sinCalzar} líneas del proyecto no calzaron exacto con la red y se ubicaron por cercanía (20 m)`);
       despuesDeCargar();
     }catch(err){ alert('Error: ' + err.message); }
-    UC.ui.ocultarLoader();
   }
   panel.querySelector('#cb-cargar').addEventListener('click', () => el('cb-file').click());
   panel.querySelector('#cb-file').addEventListener('change', e => { const f = e.target.files[0]; if(f) cargarArchivo(f); e.target.value = ''; });
-  panel.querySelector('#cb-desde-ruta').addEventListener('change', e => {
-    const r = UC.rutas.lista().find(x => x.id === e.target.value); if(!r) return;
-    corredores.push(completar({ nombre:r.nombre, ida:new Set(r.ida.map(s => s.segId).filter(id => UC.red.porId.has(id))), vuelta:new Set(r.vuelta.map(s => s.segId).filter(id => UC.red.porId.has(id))) }, corredores.length));
-    e.target.value = '';
+  // Elegir una ruta = filtro: resultados, reporte y mapa muestran solo su superposición con el proyecto
+  panel.querySelector('#cb-ruta').addEventListener('change', e => {
+    rutaFiltro = e.target.value;
+    el('cb-ruta-corr').disabled = !rutaFiltro;
+    renderResultados(); dibujar();
+  });
+  // Botón aparte: usar la ruta elegida como corredor (una sola vez; no se compara consigo misma)
+  panel.querySelector('#cb-ruta-corr').addEventListener('click', () => {
+    const r = UC.rutas.lista().find(x => x.id === rutaFiltro); if(!r) return;
+    if(corredores.some(c => c.ruta === r.id)){ UC.ui.instruccion(`"${r.nombre}" ya es un corredor`); return; }
+    corredores.push(completar({ nombre:r.nombre, ruta:r.id, ida:new Set(r.ida.map(s => s.segId).filter(id => UC.red.porId.has(id))), vuelta:new Set(r.vuelta.map(s => s.segId).filter(id => UC.red.porId.has(id))) }, corredores.length));
+    rutaFiltro = ''; el('cb-ruta').value = ''; el('cb-ruta-corr').disabled = true;
     despuesDeCargar();
   });
   panel.querySelector('#cb-quitar').addEventListener('click', () => { corredores = []; despuesDeCargar(); });
@@ -149,7 +180,7 @@
     return corredores[+v];
   }
   function itemsDe(c){
-    return rutasSets().map(r => {
+    return rutasPara(c).map(r => {
       const ov = inter(r.todos, c.todos), kmOv = kmDe(ov), pct = c.kmTotal > 0 ? kmOv / c.kmTotal * 100 : 0;
       const oI = inter(r.ida, c.todos), oV = inter(r.vuelta, c.todos);
       return { cod:r.cod, color:r.color, pct, kmOverlap:kmOv, overlap:ov,
@@ -178,8 +209,8 @@
     return `<div style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px"><span style="width:12px;height:12px;border-radius:50%;background:${dot};display:inline-block"></span><span style="font-size:13px;font-weight:700">${esc(c.nombre)}</span></div>
       <div style="font-size:12px;color:var(--text-2);margin-bottom:2px;padding-left:19px">${c.kmTotal.toFixed(2)} km total${c.kmIda > 0 ? ` &nbsp;·&nbsp; ↗ Ida: ${c.kmIda.toFixed(2)} km &nbsp;·&nbsp; ↙ Vuelta: ${c.kmVuelta.toFixed(2)} km` : ''}</div>
-      ${con.length ? rutasHtml : '<div style="font-size:12px;color:var(--text-2);padding:6px 0 4px">Ninguna ruta se superpone con este corredor.</div>'}
-      ${con.length ? `<div style="font-size:11.5px;font-weight:600;color:${colorPct(tot.pct)};padding:4px 8px;background:rgba(255,255,255,.5);border-radius:6px;margin-top:4px">Cobertura total del corredor: ${tot.pct.toFixed(1)}% (${tot.km.toFixed(2)} km sin duplicar)</div>` : ''}
+      ${con.length ? rutasHtml : `<div style="font-size:12px;color:var(--text-2);padding:6px 0 4px">${rutaFiltro && rutaFiltro === c.ruta ? 'Este corredor es la ruta elegida.' : rutaFiltro ? 'La ruta elegida no se superpone con este corredor.' :'Ninguna ruta se superpone con este corredor.'}</div>`}
+      ${con.length && !rutaFiltro ? `<div style="font-size:11.5px;font-weight:600;color:${colorPct(tot.pct)};padding:4px 8px;background:rgba(255,255,255,.5);border-radius:6px;margin-top:4px">Cobertura total del corredor: ${tot.pct.toFixed(1)}% (${tot.km.toFixed(2)} km sin duplicar)</div>` : ''}
     </div>`;
   }
   function renderResultados(){
@@ -188,7 +219,8 @@
     if(!UC.rutas.cantidad()){ box.innerHTML = '<div class="hint">No hay rutas en el proyecto para comparar con el corredor.</div>'; return; }
     const v = el('cb-sel').value;
     box.innerHTML = (v === 'todos' ? corredores.map((c, i) => bloqueCorredor(c, itemsDe(c), c.color)) : [bloqueCorredor(corredores[+v], itemsDe(corredores[+v]), corredores[+v].color)]).join('');
-    UC.ui.instruccion('Cobertura: porcentaje del corredor que recorre cada ruta existente');
+    const rf = rutaFiltro && UC.rutas.lista().find(r => r.id === rutaFiltro);
+    UC.ui.instruccion(rf ? `Cobertura: superposición de la ruta ${rf.nombre} con el proyecto` : 'Cobertura: porcentaje del corredor que recorre cada ruta existente');
   }
 
   /* ── Capas ── */
@@ -198,8 +230,8 @@
     const v = el('cb-sel').value, lista = v === 'todos' ? corredores : [corredores[+v]];
     if(verProyecto) lista.forEach(c => c.todos.forEach(id => { const si = UC.red.porId.get(id); if(si) L.polyline(si.latlngs, { renderer:corrRenderer, interactive:false, color:c.color, weight:9, opacity:0.45 }).addTo(corrLayer); }));
     if(verSuperposicion && UC.rutas.cantidad()){
-      const c = corredorActivo(), u = new Set();
-      rutasSets().forEach(r => inter(r.todos, c.todos).forEach(id => u.add(id)));
+      const rs = rutasSets(), u = new Set();
+      lista.forEach(c => rutasPara(c, rs).forEach(r => inter(r.todos, c.todos).forEach(id => u.add(id))));
       u.forEach(id => { const si = UC.red.porId.get(id); if(si) L.polyline(si.latlngs, { renderer:ovRenderer, interactive:false, color:'#f97316', weight:5, opacity:0.85 }).addTo(ovLayer); });
     }
   }
@@ -269,9 +301,13 @@
   res.querySelector('#cb-rep-proy').addEventListener('click', reporteProyecto);
 
   function llenarSelectorRutas(){
-    const s = el('cb-desde-ruta'); if(!s) return;
-    s.innerHTML = '<option value="">— Elegir ruta —</option>';
-    UC.rutas.lista().forEach(r => { const o = document.createElement('option'); o.value = r.id; o.textContent = r.nombre; s.appendChild(o); });
+    const s = el('cb-ruta'); if(!s) return;
+    const rutas = UC.rutas.lista();
+    if(rutaFiltro && !rutas.some(r => r.id === rutaFiltro)) rutaFiltro = '';   // la ruta elegida se borró
+    s.innerHTML = '<option value="">Todas las rutas</option>';
+    rutas.forEach(r => { const o = document.createElement('option'); o.value = r.id; o.textContent = r.nombre; s.appendChild(o); });
+    s.value = rutaFiltro;
+    el('cb-ruta-corr').disabled = !rutaFiltro;
   }
   UC.eventos.on('rutas:cambiadas', () => { llenarSelectorRutas(); if(activo){ renderResultados(); dibujar(); } });
   UC.eventos.on('red:cambiada', ({ eliminados }) => {
@@ -292,9 +328,10 @@
     ],
     activar(){ activo = true; corrLayer.addTo(map); ovLayer.addTo(map); llenarSelectorRutas(); renderResultados(); dibujar(); },
     desactivar(){ activo = false; map.removeLayer(corrLayer); map.removeLayer(ovLayer); },
-    serializar:() => corredores.length ? { corredores:corredores.map(c => ({ nombre:c.nombre, atributos:c.atributos, ida:[...c.ida], vuelta:[...c.vuelta] })) } : null,
+    serializar:() => corredores.length ? { corredores:corredores.map(c => ({ nombre:c.nombre, ruta:c.ruta, atributos:c.atributos, ida:[...c.ida], vuelta:[...c.vuelta] })) } : null,
     cargar(d){
-      corredores = (d && Array.isArray(d.corredores) ? d.corredores : []).map((c, i) => completar({ nombre:c.nombre, atributos:c.atributos,
+      rutaFiltro = '';
+      corredores = (d && Array.isArray(d.corredores) ? d.corredores : []).map((c, i) => completar({ nombre:c.nombre, ruta:c.ruta, atributos:c.atributos,
         ida:new Set((c.ida || []).filter(id => UC.red.porId.has(id))), vuelta:new Set((c.vuelta || []).filter(id => UC.red.porId.has(id))) }, i));
       despuesDeCargar();
     },

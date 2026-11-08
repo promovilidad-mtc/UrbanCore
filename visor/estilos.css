@@ -533,3 +533,20 @@ body.at-tabla-on #capas-panel{bottom:calc(var(--at-h) + 66px)}
 .osm-pie{font-size:11px;color:var(--text-2);line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
 #osm-cancelar{margin-left:6px}
 @media (max-width:720px){#osm-panel{left:12px;right:12px;width:auto}}
+
+/* ── Importar rutas / corredores de otra fuente (nucleo/importar.js) ── */
+.rt-importar{width:100%;justify-content:center;margin-top:8px;font-size:11.5px;padding:7px 10px}
+.imp-info{font-size:12.5px;line-height:1.5;margin-bottom:12px;padding:8px 10px;border-radius:10px;background:rgba(0,122,255,.07)}
+.imp-info i{color:var(--brand);margin-right:3px}
+.imp-valores{margin:-4px 0 12px;padding-left:10px;border-left:2px solid rgba(0,122,255,.25)}
+.imp-val-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.imp-val-row span{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-val-row small{color:var(--text-2)}
+.imp-val-row select{width:170px;flex-shrink:0;padding:6px 10px}
+.imp-resumen{font-size:12.5px;margin:10px 0 6px}
+.imp-resumen i{color:var(--brand);margin-right:3px}
+.imp-tabla{width:100%;border-collapse:collapse;font-size:12px}
+.imp-tabla th{text-align:left;font-weight:600;color:var(--text-2);padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.1);position:sticky;top:-16px;background:var(--glass-bg-strong,#fff)}
+.imp-tabla td{padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.05)}
+.imp-tabla th:not(:first-child),.imp-tabla td:not(:first-child){text-align:right;white-space:nowrap}
+.imp-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
