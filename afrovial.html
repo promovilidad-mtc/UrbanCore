@@ -4261,7 +4261,7 @@ let edAccIdx=0;
 let edViewX=0,edViewY=0,edScale=1;
 let edIsDrawing=false,edDrawStart=null,edDrawPhase=0,edDrawPts=[];
 let edTempEl=null;
-let edIsDragging=false,edDragStartMouse=null,edDragStartPos=null,edDragMode='all';
+let edIsDragging=false,edDragStartMouse=null,edDragStartPos=null,edDragMode='all',edDragMovio=false;
 let edIsPanning=false,edPanStart=null;
 let edCanvas=null,edCtx=null,edArea=null;
 let edBgImg=new Image();
@@ -4446,6 +4446,7 @@ function edOnMove(e){
   if(edIsPanning){const r=edCanvas.getBoundingClientRect();edViewX=edPanStart.vx+(e.clientX-r.left-(edPanStart.mx-r.left));edViewY=edPanStart.vy+(e.clientY-r.top-(edPanStart.my-r.top));edRender();return;}
   if(edIsDragging&&edSelectedId){
     const dx=pos.x-edDragStartMouse.x,dy=pos.y-edDragStartMouse.y;
+    if(!edDragMovio){ edSaveHist(); edDragMovio=true; }   // un paso de deshacer por arrastre (solo si de verdad se movio)
     edMoveEl(edSelectedId,edDragStartPos,dx,dy);edUpdateProps();edRender();return;
   }
   // Update cursor when hovering endpoints
@@ -4481,7 +4482,7 @@ function edOnMove(e){
 
 function edOnUp(e){
   if(edIsPanning){edIsPanning=false;edCanvas.style.cursor=edTool==='select'?'default':'crosshair';}
-  if(edIsDragging){edIsDragging=false;edSaveStorage();}
+  if(edIsDragging){edIsDragging=false;edDragMovio=false;edSaveStorage();}
 }
 
 function edOnWheel(e){
@@ -4500,7 +4501,7 @@ function edOnKey(e){
   const active=document.getElementById('page-editor')?.classList.contains('active');
   if(!active) return;
   if((e.key==='Delete'||e.key==='Backspace')&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA') edDeleteSelected();
-  if((e.ctrlKey||e.metaKey)&&e.key==='z') edUndo();
+  if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){ e.preventDefault(); edUndo(); }
   const escribiendo=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if(!e.ctrlKey&&!e.metaKey&&!escribiendo){
     if(e.key==='v') edSetTool('select');
@@ -4585,8 +4586,8 @@ function edDeleteSelected(){
   edState.elements=edState.elements.filter(e=>e.id!==edSelectedId);
   edSelectedId=null;edUpdateProps();edUpdateElemList();edSaveStorage();edRender();
 }
-function edSaveHist(){edHistory.push(JSON.stringify(edState.elements));if(edHistory.length>40)edHistory.shift();}
-function edUndo(){if(!edHistory.length) return;edState.elements=JSON.parse(edHistory.pop());edSelectedId=null;edUpdateProps();edUpdateElemList();edSaveStorage();edRender();}
+function edSaveHist(){edHistory.push(JSON.stringify(edState.elements));if(edHistory.length>100)edHistory.shift();}
+function edUndo(){if(!edHistory.length){ notify('<i class="fa-solid fa-circle-info"></i> No hay más pasos para deshacer.',2500); return; }_edHistProp='';edState.elements=JSON.parse(edHistory.pop());edSelectedId=null;edUpdateProps();edUpdateElemList();edSaveStorage();edRender();}
 
 // ── RENDER ──
 function edRender(){
@@ -5065,8 +5066,13 @@ function edUpdateProps(){
 }
 
 let _edGuardarT=null;
+let _edHistProp='',_edHistPropT=0;
 function edSetProp(id,prop,val){
   const el=edState.elements.find(e=>e.id===id);if(!el) return;
+  // Un paso de deshacer por cada cambio de propiedad (mover un deslizador cuenta como un solo paso)
+  const k=id+'|'+prop, ahora=Date.now();
+  if(k!==_edHistProp||ahora-_edHistPropT>1500) edSaveHist();
+  _edHistProp=k; _edHistPropT=ahora;
   el[prop]=val; edRender(); edUpdateElemList();
   // Antes se redibujaba el panel en cada movimiento del deslizador (se soltaba al arrastrar) y se
   // guardaba todo el dibujo con su imagen en cada paso. Ahora el guardado espera a que termines.
@@ -5082,8 +5088,8 @@ function edDupe(){
   edState.elements.push(copy);edSelectedId=copy.id;
   edUpdateProps();edUpdateElemList();edSaveStorage();edRender();
 }
-function edFront(){const i=edState.elements.findIndex(e=>e.id===edSelectedId);if(i<0||i===edState.elements.length-1) return;edState.elements.push(edState.elements.splice(i,1)[0]);edSaveStorage();edRender();}
-function edBack(){const i=edState.elements.findIndex(e=>e.id===edSelectedId);if(i<=0) return;edState.elements.unshift(edState.elements.splice(i,1)[0]);edSaveStorage();edRender();}
+function edFront(){const i=edState.elements.findIndex(e=>e.id===edSelectedId);if(i<0||i===edState.elements.length-1) return;edSaveHist();edState.elements.push(edState.elements.splice(i,1)[0]);edSaveStorage();edRender();}
+function edBack(){const i=edState.elements.findIndex(e=>e.id===edSelectedId);if(i<=0) return;edSaveHist();edState.elements.unshift(edState.elements.splice(i,1)[0]);edSaveStorage();edRender();}
 
 // ── ELEM LIST ──
 function edUpdateElemList(){
