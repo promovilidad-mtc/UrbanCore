@@ -4823,7 +4823,7 @@ function edGetMovColor(movCode){
     const accId=String(movCode).slice(4);
     const accActivos=S.accesos.filter(a=>a.activo);
     const ai=accActivos.findIndex(a=>a.id===accId);
-    return ED_ACC_COLORS[(ai>=0?ai:0)%6];
+    return ai>=0?ED_ACC_COLORS[ai%6]:'#5f6368';   // gris: acceso solo de salida
   }
   if(String(movCode).startsWith('PEAT_')){
     const ladoNombre=String(movCode).replace('PEAT_','');
@@ -4947,12 +4947,14 @@ function edRenderHPMovs(){
   // ── Total por salida: lo que sale por cada acceso ──
   const elSal=document.getElementById('ed-hp-sal');
   if(elSal){
-    elSal.innerHTML=accActivos.map((acc,ai)=>{
+    const conSalida=S.accesos.filter(a=>a.activo||edTotalSalida(a.id,t)>0);
+    elSal.innerHTML=conSalida.map((acc)=>{
+      const ai=accActivos.indexOf(acc);
       const code='SAL_'+acc.id, total=edTotalSalida(acc.id,t);
       return `<div class="ed-mov-item ${edSelectedMov===code?'sel':''}" onclick="edSelectedMov='${code}';edSetTool('hpval');edRenderHPMovs()">
-        <div style="width:10px;height:10px;border-radius:3px;border:2px solid ${ED_ACC_COLORS[ai%6]};flex-shrink:0"></div>
-        <span style="flex:1;font-weight:600;color:#1D1D1F">${acc.label}</span>
-        <span style="font-weight:700;font-size:13px;color:${ED_ACC_COLORS[ai%6]}">${total}</span>
+        <div style="width:10px;height:10px;border-radius:3px;border:2px solid ${ai>=0?ED_ACC_COLORS[ai%6]:'#5f6368'};flex-shrink:0"></div>
+        <span style="flex:1;font-weight:600;color:#1D1D1F">${acc.label}${ai>=0?'':' (solo salida)'}</span>
+        <span style="font-weight:700;font-size:13px;color:${ai>=0?ED_ACC_COLORS[ai%6]:'#5f6368'}">${total}</span>
       </div>`;
     }).join('');
   }
@@ -5672,7 +5674,7 @@ function mpCorte(a,b,c,d){
 
 // Asigna cada brazo al acceso activo más parecido según su rumbo (N 0°, E 90°, S 180°, O 270°)
 function mpAsignar(){
-  const ids=S.accesos.filter(a=>a.activo).map(a=>a.id);
+  const ids=S.accesos.filter(a=>a.activo||a.id in MP_CARDINAL).map(a=>a.id);
   const fijos=new Set(mpPiernas.filter(p=>p.fijo&&p.acc).map(p=>p.acc));
   const libres=mpPiernas.filter(p=>!(p.fijo&&p.acc));
   const op=ids.filter(id=>!fijos.has(id));
@@ -5689,7 +5691,7 @@ function mpAsignar(){
 
 function mpColorAcc(id){
   const act=S.accesos.filter(a=>a.activo), i=act.findIndex(a=>a.id===id);
-  return i>=0?ED_ACC_COLORS[i%6]:'#80868b';
+  return i>=0?ED_ACC_COLORS[i%6]:'#5f6368';
 }
 function mpDibujarPiernas(soloLineas){
   if(!mpCapaPiernas) return;
@@ -5707,7 +5709,7 @@ function mpDibujarPiernas(soloLineas){
 function mpRenderLista(){
   const el=document.getElementById('mp-lista'); if(!el) return;
   if(!mpPiernas.length){ el.innerHTML='<div class="mp-vacio">Sin brazos todavía.</div>'; mpActualizarBotones(); return; }
-  const act=S.accesos.filter(a=>a.activo);
+  const act=S.accesos.filter(a=>a.activo||a.id in MP_CARDINAL);
   el.innerHTML=mpPiernas.map((p,i)=>`
     <div class="mp-pierna">
       <span class="mp-dot" style="background:${mpColorAcc(p.acc)}"></span>
@@ -5717,7 +5719,7 @@ function mpRenderLista(){
       </div>
       <select onchange="mpCambiarAcc(${i},this.value)" title="Acceso">
         <option value="">Sin acceso</option>
-        ${act.map(a=>`<option value="${a.id}" ${p.acc===a.id?'selected':''}>${mpEsc(a.label)}</option>`).join('')}
+        ${act.map(a=>`<option value="${a.id}" ${p.acc===a.id?'selected':''}>${mpEsc(a.label)}${a.activo?'':' (solo salida)'}</option>`).join('')}
       </select>
       <input type="number" min="3" max="60" step="0.5" value="${p.ancho}" title="Ancho de calzada (m)" onchange="mpPiernas[${i}].ancho=Math.max(3,parseFloat(this.value)||7)">
       <button class="mp-x" onclick="mpQuitar(${i})" title="Quitar brazo"><i class="fa-solid fa-xmark"></i></button>
@@ -5882,7 +5884,8 @@ async function mpUsarFondo(generar){
 const ED_DESTINO_CARD={N:{0:'N',1:'E',2:'S',3:'O'},S:{0:'S',1:'O',2:'N',3:'E'},E:{0:'E',1:'S',2:'O',3:'N'},O:{0:'O',1:'N',2:'E',3:'S'}};
 function edDestinoGeo(geo,id,tipo){
   if(tipo===0) return id;
-  const ids=S.accesos.filter(a=>a.activo&&geo.accesos[a.id]).map(a=>a.id);
+  // un brazo sin conteo de entrada (acceso inactivo) igual puede ser salida
+  const ids=S.accesos.filter(a=>geo.accesos[a.id]).map(a=>a.id);
   const vec=k=>{ const t=geo.accesos[k].ang*Math.PI/180; return {x:Math.cos(t),y:Math.sin(t)}; };
   const u0=vec(id), d={x:-u0.x,y:-u0.y};
   const op=ids.filter(j=>j!==id).map(j=>{ const u=vec(j); return {j,ang:Math.atan2(d.x*u.y-d.y*u.x,d.x*u.x+d.y*u.y)*180/Math.PI}; }); // + = derecha
@@ -5898,7 +5901,7 @@ function edDestinoMov(m){
   const g=S.flujoGeo&&S.flujoGeo.px;
   if(g&&g.accesos&&g.accesos[a.id]){ const d=edDestinoGeo(g,a.id,tipo); if(d) return d; }
   const d=ED_DESTINO_CARD[a.id]&&ED_DESTINO_CARD[a.id][tipo];
-  return d&&S.accesos.some(x=>x.activo&&x.id===d)?d:null;
+  return d&&S.accesos.some(x=>x.id===d)?d:null;   // vale aunque ese acceso sea solo de salida
 }
 // Vehículos que salen por un acceso en la hora punta del turno t
 function edTotalSalida(accId,t){
@@ -5939,10 +5942,11 @@ function edGenerarFlujograma(geo,opc){
   const der=v=>({x:-v.y,y:v.x});                // a la derecha del sentido v (eje y hacia abajo)
   const r1=n=>Math.round(n*10)/10;
   const dentro=(p,m)=>({x:Math.min(W-m,Math.max(m,p.x)),y:Math.min(H-m,Math.max(m,p.y))});
-  const accs=S.accesos.filter(a=>a.activo&&geo.accesos[a.id]);
+  const brazos=S.accesos.filter(a=>geo.accesos[a.id]);           // incluye accesos solo de salida
+  const accs=brazos.filter(a=>a.activo);                            // los que tienen conteo de entrada
   if(!accs.length){ notify('No hay accesos activos con brazo asignado.'); return 0; }
   const L={};
-  accs.forEach(a=>{
+  brazos.forEach(a=>{
     const g=geo.accesos[a.id], t=g.ang*Math.PI/180;
     const u={x:Math.cos(t),y:Math.sin(t)};
     let far=1e9;   // largo disponible hasta el borde de la imagen
@@ -5985,9 +5989,16 @@ function edGenerarFlujograma(geo,opc){
     } else push({type:'curve',x1:r1(ini.x),y1:r1(ini.y),cx1:r1(ent.x),cy1:r1(ent.y),cx2:r1(sal.x),cy2:r1(sal.y),x2:r1(fin.x),y2:r1(fin.y),color,width:w,as});
   });
 
-  // tramo de llegada de cada acceso y su total
-  accs.forEach(a=>{
+  // tramo de llegada de cada acceso y su total (en los de solo salida, solo el total de salida)
+  brazos.forEach(a=>{
     const o=L[a.id], d={x:-o.u.x,y:-o.u.y}, col=edGetMovColor('TOT_'+a.id);
+    if(!a.activo){
+      if(movs.some(m=>m.dst===a.id)){
+        const ps=dentro(add(add(C,o.u,o.far-2),der(o.u),o.hw*0.5+50*E),55*E);
+        push({type:'hpval',x:r1(ps.x),y:r1(ps.y),movCode:'SAL_'+a.id,movLabel:edGetMovLabel('SAL_'+a.id),value:edGetHPVal('SAL_'+a.id),color:col,fontSize:fs(13),rotation:rot(o.u)});
+      }
+      return;
+    }
     const p1=add(add(C,o.u,o.far-20),der(d),o.hw*0.5), p2=add(add(C,o.u,o.rs+70*E),der(d),o.hw*0.5);
     if(o.far-20>o.rs+75*E) push({type:'line',x1:r1(p1.x),y1:r1(p1.y),x2:r1(p2.x),y2:r1(p2.y),color:col,width:5});
     const pt=dentro(add(add(C,o.u,o.far-2),der(d),o.hw*0.5+50*E),55*E);
@@ -6027,7 +6038,7 @@ function edGenerarFlujograma(geo,opc){
   // nombre de cada vía, una vez, sobre el brazo más largo
   const colTexto=(S.flujoGeo&&S.flujoGeo.base==='esquema')?'#3c4043':'#FFFFFF';   // oscuro sobre el esquema claro
   const vistas=new Set();
-  accs.slice().sort((a,b)=>L[b.id].far-L[a.id].far).forEach(a=>{
+  brazos.slice().sort((a,b)=>L[b.id].far-L[a.id].far).forEach(a=>{
     if(!a.via||vistas.has(a.via)) return; vistas.add(a.via);
     const o=L[a.id], p=dentro(add(add(C,o.u,(o.rs+o.far)/2+40*E),der(o.u),-(o.hw+30*E)),60*E);
     push({type:'text',x:r1(p.x),y:r1(p.y),text:a.via,fontSize:fs(16),bold:true,color:colTexto,rotation:rot(o.u)});
