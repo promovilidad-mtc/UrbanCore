@@ -4831,8 +4831,11 @@ function edRefreshHPVals(){
   if(updated){ edRender(); edSaveStorage(); }
 }
 
+// Las salidas juntan flujos de varios accesos: van en gris oscuro, no con el color de un acceso
+const ED_COLOR_SALIDA='#3c4043';
 // Devuelve el color del acceso al que pertenece un movimiento/código
 function edGetMovColor(movCode){
+  if(String(movCode).startsWith('SAL_')) return ED_COLOR_SALIDA;
   if(String(movCode).startsWith('TOT_')||String(movCode).startsWith('SAL_')){
     const accId=String(movCode).slice(4);
     const accActivos=S.accesos.filter(a=>a.activo);
@@ -4967,9 +4970,9 @@ function edRenderHPMovs(){
       const ai=accActivos.indexOf(acc);
       const code='SAL_'+acc.id, total=edTotalSalida(acc.id,t);
       return `<div class="ed-mov-item ${edSelectedMov===code?'sel':''}" onclick="edSelectedMov='${code}';edSetTool('hpval');edRenderHPMovs()">
-        <div style="width:10px;height:10px;border-radius:3px;border:2px solid ${ai>=0?ED_ACC_COLORS[ai%6]:'#5f6368'};flex-shrink:0"></div>
+        <div style="width:10px;height:10px;border-radius:3px;border:2px solid var(--text,${ED_COLOR_SALIDA});flex-shrink:0"></div>
         <span style="flex:1;font-weight:600;color:#1D1D1F">${acc.label}${ai>=0?'':' (solo salida)'}</span>
-        <span style="font-weight:700;font-size:13px;color:${ai>=0?ED_ACC_COLORS[ai%6]:'#5f6368'}">${total}</span>
+        <span style="font-weight:700;font-size:13px;color:var(--text,${ED_COLOR_SALIDA})">${total}</span>
       </div>`;
     }).join('');
   }
@@ -6073,7 +6076,7 @@ function edGenerarFlujograma(geo,opc){
     if(!a.activo){
       if(movs.some(m=>m.dst===a.id)){
         const ps=dentro(add(add(C,o.u,o.far-2),der(o.u),o.hw*0.5+50*E),55*E);
-        push({type:'hpval',x:r1(ps.x),y:r1(ps.y),movCode:'SAL_'+a.id,movLabel:edGetMovLabel('SAL_'+a.id),value:edGetHPVal('SAL_'+a.id),color:col,fontSize:fs(13),rotation:rot(o.u)});
+        push({type:'hpval',x:r1(ps.x),y:r1(ps.y),movCode:'SAL_'+a.id,movLabel:edGetMovLabel('SAL_'+a.id),value:edGetHPVal('SAL_'+a.id),color:ED_COLOR_SALIDA,fontSize:fs(13),rotation:rot(o.u)});
       }
       return;
     }
@@ -6084,7 +6087,7 @@ function edGenerarFlujograma(geo,opc){
     // total que sale por este acceso, al otro lado de la vía
     if(movs.some(m=>m.dst===a.id)){
       const ps=dentro(add(add(C,o.u,o.far-2),der(o.u),o.hw*0.5+50*E),55*E);
-      push({type:'hpval',x:r1(ps.x),y:r1(ps.y),movCode:'SAL_'+a.id,movLabel:edGetMovLabel('SAL_'+a.id),value:edGetHPVal('SAL_'+a.id),color:col,fontSize:fs(13),rotation:rot(o.u)});
+      push({type:'hpval',x:r1(ps.x),y:r1(ps.y),movCode:'SAL_'+a.id,movLabel:edGetMovLabel('SAL_'+a.id),value:edGetHPVal('SAL_'+a.id),color:ED_COLOR_SALIDA,fontSize:fs(13),rotation:rot(o.u)});
     }
   });
 
