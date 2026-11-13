@@ -6049,7 +6049,7 @@ function edGenerarFlujograma(geo,opc){
     movs.push({code:String(m),ori:a.id,dst,tipo:edTipoDibujo(geo,a.id,dst),vol:edGetHPVal(String(m))});
   }));
   const vmax=Math.max(1,...movs.map(m=>m.vol));
-  const ancho=()=>5;   // grosor uniforme; el ancho de calzada solo separa los carriles
+  const ancho=()=>7;   // grosor uniforme; el ancho de calzada solo separa los carriles
 
   const els=[]; let id=edState.nextId||1000;
   const push=e=>{ e.id=id++; els.push(e); };
@@ -6062,7 +6062,7 @@ function edGenerarFlujograma(geo,opc){
     const ent=add(add(C,o.u,o.rs),der(d),offIn);
     const sal=add(add(C,s.u,s.rs),der(s.u),offOut);
     const fin=add(add(C,s.u,Math.max(s.rs+40*E,Math.min(s.rs+120*E,s.far-40*E))),der(s.u),offOut);
-    const color=edGetMovColor(m.code), w=ancho(m.vol), as=Math.round(9*E+w*1.6);
+    const color=edGetMovColor(m.code), w=ancho(m.vol), as=Math.round(25*E/1.5);   // punta de 25 px en la imagen del mapa (E = 1.5)
     if(m.tipo===2) push({type:'arrow',x1:r1(ini.x),y1:r1(ini.y),x2:r1(fin.x),y2:r1(fin.y),color,width:w,as});
     else if(m.tipo===0){
       const c1=add(add(C,o.u,o.rs*0.15),der(d),offIn), c2=add(add(C,s.u,s.rs*0.15),der(s.u),offOut);
@@ -6081,7 +6081,7 @@ function edGenerarFlujograma(geo,opc){
       return;
     }
     const p1=add(add(C,o.u,o.far-20),der(d),o.hw*0.5), p2=add(add(C,o.u,o.rs+70*E),der(d),o.hw*0.5);
-    if(o.far-20>o.rs+75*E) push({type:'line',x1:r1(p1.x),y1:r1(p1.y),x2:r1(p2.x),y2:r1(p2.y),color:col,width:5});
+    if(o.far-20>o.rs+75*E) push({type:'line',x1:r1(p1.x),y1:r1(p1.y),x2:r1(p2.x),y2:r1(p2.y),color:col,width:7});
     const pt=dentro(add(add(C,o.u,o.far-2),der(d),o.hw*0.5+50*E),55*E);
     push({type:'hpval',x:r1(pt.x),y:r1(pt.y),movCode:'TOT_'+a.id,movLabel:edGetMovLabel('TOT_'+a.id),value:edGetHPVal('TOT_'+a.id),color:col,fontSize:fs(13),rotation:rot(o.u)});
     // total que sale por este acceso, al otro lado de la vía
@@ -6095,8 +6095,8 @@ function edGenerarFlujograma(geo,opc){
   ids.forEach(j=>{
     const s=L[j], llegan=movs.filter(m=>m.dst===j).sort((a,b)=>FR[a.tipo]-FR[b.tipo]);
     llegan.forEach((m,k)=>{
-      const p=dentro(add(add(C,s.u,Math.max(s.rs+70*E,Math.min(s.rs+150*E,s.far-15*E))),der(s.u),s.hw*0.15+k*21*E),40*E);
-      push({type:'hpval',x:r1(p.x),y:r1(p.y),movCode:m.code,movLabel:m.code,value:m.vol,color:edGetMovColor(m.code),fontSize:fs(9),rotation:rot(s.u)});
+      const p=dentro(add(add(C,s.u,Math.max(s.rs+70*E,Math.min(s.rs+150*E,s.far-15*E))),der(s.u),s.hw*0.15+k*28*E),40*E);
+      push({type:'hpval',x:r1(p.x),y:r1(p.y),movCode:m.code,movLabel:m.code,value:m.vol,color:edGetMovColor(m.code),fontSize:fs(13),rotation:rot(s.u)});
     });
   });
 
