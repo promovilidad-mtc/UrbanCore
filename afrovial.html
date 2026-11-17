@@ -892,6 +892,16 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 .sal-mov{flex:1;min-width:0;font-size:11px;color:var(--text,#202124);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sal-mov b{font-weight:700;margin-right:4px}
 .sal-fila select{font-family:inherit;font-size:11px;padding:3px;border:1px solid var(--border,#dadce0);border-radius:5px;background:var(--surface,#fff);color:var(--text,#202124);max-width:120px}
+.aforo-table th.th-mov.th-clic{cursor:pointer}
+.aforo-table th.th-mov.th-clic:hover{text-decoration:underline;filter:brightness(1.12)}
+#dt-menu{position:fixed;z-index:3000;min-width:250px;max-width:340px;background:var(--surface,#fff);border:1px solid var(--border,#dadce0);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);padding:6px 0;font-size:13px;color:var(--text,#202124)}
+#dt-menu .dtm-tit{padding:6px 14px 4px;font-size:11px;font-weight:600;color:var(--text-sec,#5f6368)}
+#dt-menu .dtm-it{display:flex;gap:10px;align-items:flex-start;padding:8px 14px;cursor:pointer}
+#dt-menu .dtm-it:hover{background:var(--g-hover,#f1f3f4)}
+#dt-menu .dtm-it i{width:16px;text-align:center;color:var(--text-sec,#5f6368);margin-top:2px}
+#dt-menu .dtm-sub{font-size:11px;color:var(--text-sec,#5f6368);margin-top:1px}
+#dt-menu .dtm-sep{height:1px;background:var(--border-lt,#e8eaed);margin:4px 0}
+#dt-menu .dtm-nota{padding:8px 14px 4px;font-size:11px;color:var(--text-sec,#5f6368);border-top:1px solid var(--border-lt,#e8eaed);margin-top:4px;line-height:1.4}
 .sal-fila select.manual{border-color:var(--g-azul,#1a73e8);color:var(--g-azul-texto,#1967d2);font-weight:600}
 .mp-pie{padding:12px 16px;border-top:1px solid var(--border,#dadce0);display:flex;flex-direction:column;gap:8px}
 .mp-btn{font-family:inherit;font-size:13px;padding:8px 12px;border-radius:6px;border:1px solid var(--border,#dadce0);background:var(--surface,#fff);color:var(--text,#202124);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
@@ -1178,6 +1188,7 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
           <option value="3">Noche</option>
         </select>
       </div>
+      <button class="btn btn-sm" onclick="dtMenuSalida(event)" title="Copia lo que sale por un brazo (cada 15 min y por vehículo) para pegarlo en el cruce vecino"><i class="fa-solid fa-copy"></i> Copiar salida</button>
       <button class="btn btn-sm" onclick="limpiarAcceso()"><i class="fa-solid fa-trash"></i> Limpiar acceso</button>
     </div>
   </div>
@@ -2084,7 +2095,7 @@ function renderTabla(){
   aveh.forEach((v,vi)=>{
     const bg=VEH_COLORS[vi%VEH_COLORS.length];
     acc.movs.forEach(m=>{
-      th2+=`<th class="th-mov" style="background:${bg}CC;color:white;font-size:11px;font-weight:600;min-width:42px;border-left:1px solid rgba(255,255,255,0.2)">${m}</th>`;
+      th2+=`<th class="th-mov th-clic" onclick="dtMenuMov(event,'${accId}',${m})" title="Clic: copiar o pegar el movimiento ${m}" style="background:${bg}CC;color:white;font-size:11px;font-weight:600;min-width:42px;border-left:1px solid rgba(255,255,255,0.2)">${m}</th>`;
     });
   });
 
@@ -2174,6 +2185,132 @@ function limpiarAcceso(){
     S.datos[accId]={};
     markDirty(); renderTabla();
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  COPIAR / PEGAR MOVIMIENTOS (para cuadrar flujos entre cruces de un corredor)
+//  Un "bloque" es {intervalo: {vehículo: valor}}. Se copia como texto con tabulaciones
+//  (Intervalo | Autos | Bus | ...), así también se puede pegar en Excel o traer desde Excel.
+// ══════════════════════════════════════════════════════════════
+const DT_BUFFER_KEY='aforo_portapapeles';
+function dtVehActivos(){ return S.vehiculos.filter(v=>v.ok).map(v=>v.n); }
+function dtTotalBloque(b,veh){ let t=0; Object.values(b).forEach(f=>Object.keys(f).forEach(n=>{ if(!veh||veh.includes(n)) t+=f[n]||0; })); return t; }
+// Bloque de un movimiento de un acceso (solo vehículos activos)
+function dtBloqueMov(accId,m){
+  const b={}, D=S.datos[accId]||{};
+  INTERVALS.forEach((_,ii)=>{ dtVehActivos().forEach(n=>{ const v=(D[ii]&&D[ii][`${m}__${n}`])||0; if(v>0){ (b[ii]=b[ii]||{})[n]=v; } }); });
+  return b;
+}
+// Movimientos que salen por el brazo destId (usa lo elegido en "Salida de cada movimiento")
+function dtMovsHacia(destId){
+  const r=[]; S.accesos.filter(a=>a.activo).forEach(a=>a.movs.forEach(m=>{ if(edDestinoMov(m)===destId) r.push({acc:a.id,m}); }));
+  return r;
+}
+function dtBloqueSalida(destId){
+  const b={};
+  dtMovsHacia(destId).forEach(({acc,m})=>{ const bm=dtBloqueMov(acc,m);
+    Object.keys(bm).forEach(ii=>Object.keys(bm[ii]).forEach(n=>{ (b[ii]=b[ii]||{})[n]=((b[ii]||{})[n]||0)+bm[ii][n]; })); });
+  return b;
+}
+function dtBloqueATexto(b){
+  const veh=dtVehActivos(), filas=Object.keys(b).map(Number).sort((x,y)=>x-y);
+  let t='Intervalo\t'+veh.join('\t')+'\n';
+  if(filas.length) for(let ii=filas[0];ii<=filas[filas.length-1];ii++) t+=INTERVALS[ii]+'\t'+veh.map(n=>(b[ii]&&b[ii][n])||0).join('\t')+'\n';
+  return t;
+}
+// Índice del intervalo a partir de "07:15 - 07:30", "7:15" o "07:15–07:30"
+function dtIntervalo(txt){
+  const m=String(txt||'').trim().match(/^(\d{1,2}):(\d{2})/); if(!m) return -1;
+  return INTERVALS.findIndex(x=>x.startsWith(pad(+m[1])+':'+m[2]));
+}
+function dtTextoABloque(txt){
+  const lin=String(txt||'').replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  if(!lin.length) return null;
+  let cols, ini=0;
+  const c0=lin[0].split('\t');
+  if(dtIntervalo(c0[0])<0){ cols=c0.slice(1).map(x=>x.trim()); ini=1; }   // fila de títulos con los vehículos
+  else cols=dtVehActivos();                                                // sin títulos: vehículos en el orden de este cruce
+  const b={}; let filas=0;
+  for(let i=ini;i<lin.length;i++){
+    const c=lin[i].split('\t'), ii=dtIntervalo(c[0]);
+    if(ii<0) return null;
+    filas++;
+    cols.forEach((n,j)=>{ const v=Math.round(parseFloat(String(c[j+1]||'').trim())); if(v>0) (b[ii]=b[ii]||{})[n]=v; });
+  }
+  return filas?{bloque:b,cols}:null;
+}
+async function dtCopiar(b,desc){
+  const tot=dtTotalBloque(b);
+  if(!tot){ notify('<i class="fa-solid fa-circle-info"></i> No hay datos para copiar ('+desc+').',4000); return; }
+  const texto=dtBloqueATexto(b);
+  try{ localStorage.setItem(DT_BUFFER_KEY,JSON.stringify({texto,desc,fecha:Date.now()})); }catch(e){}
+  try{ await navigator.clipboard.writeText(texto); }catch(e){}
+  notify(`<i class="fa-solid fa-copy"></i> Copiado: ${desc} — ${tot} veh. Abre el otro cruce, haz clic en el movimiento y elige “Pegar”.`,6500);
+}
+async function dtLeerCopiado(){
+  let buf=null; try{ buf=JSON.parse(localStorage.getItem(DT_BUFFER_KEY)||'null'); }catch(e){}
+  let txt=null; try{ txt=await navigator.clipboard.readText(); }catch(e){}
+  const limpio=t=>String(t||'').replace(/\r/g,'').trim();   // Windows agrega saltos CR al portapapeles
+  if(txt){ const p=dtTextoABloque(txt); if(p){ p.desc=(buf&&limpio(buf.texto)===limpio(txt))?buf.desc:'datos del portapapeles (Excel u otra app)'; return p; } }
+  if(buf&&buf.texto){ const p=dtTextoABloque(buf.texto); if(p){ p.desc=buf.desc; return p; } }
+  return null;
+}
+async function dtPegar(accId,m,modo){
+  const p=await dtLeerCopiado();
+  if(!p){ notify('<i class="fa-solid fa-circle-info"></i> No hay nada copiado. Primero usa “Copiar movimiento” o “Copiar salida”.',5000); return; }
+  const veh=dtVehActivos(), acc=S.accesos.find(a=>a.id===accId);
+  const filas=Object.keys(p.bloque).map(Number).sort((x,y)=>x-y);
+  const tot=dtTotalBloque(p.bloque,veh);
+  const faltan=p.cols.filter(n=>!veh.includes(n)&&Object.values(p.bloque).some(f=>f[n]>0));
+  const actual=dtTotalBloque(dtBloqueMov(accId,m));
+  let msg=`${modo==='sumar'?'Sumar':'Pegar'} en el movimiento ${m} (${acc?acc.label:accId}):\n\n• Origen: ${p.desc}\n• ${tot} vehículos`+(filas.length?`, de ${INTERVALS[filas[0]].slice(0,5)} a ${INTERVALS[filas[filas.length-1]].slice(-5)}`:'')+'\n';
+  if(modo==='reemplazar'&&actual) msg+=`\nSe borrarán los ${actual} vehículos que este movimiento tiene ahora (en todo el día).\n`;
+  if(modo==='sumar') msg+=`\nSe sumarán a los ${actual} vehículos que este movimiento ya tiene.\n`;
+  if(faltan.length) msg+=`\nEstos vehículos no están activos en este cruce y no se pegarán: ${faltan.join(', ')}.\n`;
+  if(!confirm(msg+'\n¿Continuar?')) return;
+  const D=S.datos[accId]||(S.datos[accId]={});
+  if(modo==='reemplazar') Object.keys(D).forEach(ii=>veh.forEach(n=>{ delete D[ii][`${m}__${n}`]; }));
+  filas.forEach(ii=>veh.forEach(n=>{ const v=p.bloque[ii][n]||0; if(!v) return;
+    const f=D[ii]||(D[ii]={}), k=`${m}__${n}`; f[k]=(modo==='sumar'?(f[k]||0):0)+v; }));
+  markDirty(); renderTabla();
+  notify(`<i class="fa-solid fa-check"></i> ${modo==='sumar'?'Sumado':'Pegado'} en el movimiento ${m}: ahora tiene ${dtTotalBloque(dtBloqueMov(accId,m))} veh.`,5000);
+}
+// ── Menú flotante ──
+let _dtItems=[];
+function dtCerrarMenu(){ const el=document.getElementById('dt-menu'); if(el) el.remove(); }
+function dtMenu(ev,items,nota){
+  ev.stopPropagation(); dtCerrarMenu(); _dtItems=items;
+  const el=document.createElement('div'); el.id='dt-menu';
+  el.innerHTML=items.map((it,i)=>it.sep?'<div class="dtm-sep"></div>':it.tit?`<div class="dtm-tit">${it.tit}</div>`:
+    `<div class="dtm-it" onclick="dtCerrarMenu();_dtItems[${i}].fn()"><i class="fa-solid ${it.ico}"></i><div><div>${it.txt}</div>${it.sub?`<div class="dtm-sub">${it.sub}</div>`:''}</div></div>`).join('')+(nota?`<div class="dtm-nota">${nota}</div>`:'');
+  document.body.appendChild(el);
+  const r=el.getBoundingClientRect();
+  el.style.left=Math.max(8,Math.min(ev.clientX,innerWidth-r.width-8))+'px';
+  el.style.top=Math.max(8,Math.min(ev.clientY+6,innerHeight-r.height-8))+'px';
+}
+document.addEventListener('mousedown',e=>{ const el=document.getElementById('dt-menu'); if(el&&!el.contains(e.target)) dtCerrarMenu(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') dtCerrarMenu(); });
+function dtNombreCruce(){ return (S.gen&&S.gen.inter)||'este cruce'; }
+function dtMenuMov(ev,accId,m){
+  const acc=S.accesos.find(a=>a.id===accId), tot=dtTotalBloque(dtBloqueMov(accId,m));
+  dtMenu(ev,[
+    {tit:`Movimiento ${m} · ${acc?acc.label:accId}`},
+    {ico:'fa-copy',txt:'Copiar movimiento',sub:`Todos los vehículos, cada 15 min · ${tot} veh`,fn:()=>dtCopiar(dtBloqueMov(accId,m),`Mov. ${m} (${acc?acc.label:accId}) · ${dtNombreCruce()}`)},
+    {sep:true},
+    {ico:'fa-paste',txt:'Pegar aquí (reemplazar)',sub:'Borra lo que tiene este movimiento y pone lo copiado',fn:()=>dtPegar(accId,m,'reemplazar')},
+    {ico:'fa-plus',txt:'Pegar sumando',sub:'Suma lo copiado a lo que ya tiene',fn:()=>dtPegar(accId,m,'sumar')}
+  ],'También puedes pegar un bloque copiado de Excel: primera columna con el intervalo (07:00 - 07:15) y una columna por vehículo.');
+}
+function dtMenuSalida(ev){
+  const items=[{tit:`Copiar salida · ${dtNombreCruce()}`}];
+  S.accesos.forEach(x=>{
+    const mv=dtMovsHacia(x.id); if(!mv.length) return;
+    const b=dtBloqueSalida(x.id);
+    items.push({ico:'fa-arrow-right-from-bracket',txt:`Salida hacia ${x.label}${x.via?' — '+x.via:''}`,sub:`Movs. ${mv.map(o=>o.m).join(' + ')} · ${dtTotalBloque(b)} veh`,
+      fn:()=>dtCopiar(dtBloqueSalida(x.id),`Salida hacia ${x.label} (movs. ${mv.map(o=>o.m).join(' + ')}) · ${dtNombreCruce()}`)});
+  });
+  if(items.length===1) items.push({tit:'No hay movimientos con salida definida.'});
+  dtMenu(ev,items,'Suma, cada 15 min y por vehículo, los movimientos que salen por ese brazo. Usa la salida elegida en “Salida de cada movimiento” del Editor.');
 }
 
 // ══════════════════════════════════════════════════════════════
