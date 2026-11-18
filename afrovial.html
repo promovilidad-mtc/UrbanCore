@@ -2499,16 +2499,21 @@ function crSesiones(){ return CR.vista==='aj'&&CR.aj?CR.aj:CR.cruces.map(c=>c.se
 // ── Cargar ──
 async function crCargarArchivos(files){
   const lista=[...files].filter(f=>/\.json$/i.test(f.name));
+  const prinNom=CR.cruces[CR.principal]&&CR.cruces[CR.principal].archivo;
   for(const f of lista){
     try{
       const ses=completarEstado(JSON.parse(await f.text()));
       const g=ses.flujoGeo;
-      CR.cruces.push({archivo:f.name,ses,lat:g&&g.lat||null,lon:g&&g.lon||null,geo:!!(g&&g.lat&&(g.piernas||[]).some(p=>p.acc))});
+      const nuevo={archivo:f.name,ses,lat:g&&g.lat||null,lon:g&&g.lon||null,geo:!!(g&&g.lat&&(g.piernas||[]).some(p=>p.acc))};
+      // Si el archivo ya estaba cargado, se reemplaza (no se duplica el cruce)
+      const ya=CR.cruces.findIndex(c=>c.archivo===f.name);
+      if(ya>=0) CR.cruces[ya]=nuevo; else CR.cruces.push(nuevo);
     }catch(e){ notify(`<i class="fa-solid fa-triangle-exclamation"></i> No se pudo leer ${f.name}: ${e.message}`,6000); }
   }
   // Orden inicial: por el número con que empieza el nombre del archivo (3_..., 4_..., 5_...)
   const num=c=>{ const m=c.archivo.match(/^(\d+)/); return m?+m[1]:1e9; };
   CR.cruces.sort((a,b)=>num(a)-num(b)||a.archivo.localeCompare(b.archivo));
+  CR.principal=Math.max(0,CR.cruces.findIndex(c=>c.archivo===prinNom));
   crAutoEje(); crAutoConexiones(); crLimpiarAjuste(); crRender();
 }
 // Si hay ubicaciones, elige el sentido del orden según cómo avanzan los cruces en el mapa
