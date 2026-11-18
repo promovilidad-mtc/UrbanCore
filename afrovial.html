@@ -1188,7 +1188,7 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
           <option value="3">Noche</option>
         </select>
       </div>
-      <button class="btn btn-sm" onclick="dtMenuSalida(event)" title="Copia lo que sale por un brazo (cada 15 min y por vehículo) para pegarlo en el cruce vecino"><i class="fa-solid fa-copy"></i> Copiar salida</button>
+      <button class="btn btn-sm" onclick="dtMenuSalida(event)" title="Copia lo que sale por un brazo o lo que entra por un acceso (cada 15 min y por vehículo) para pegarlo en el cruce vecino"><i class="fa-solid fa-copy"></i> Copiar salida / entrada</button>
       <button class="btn btn-sm" onclick="limpiarAcceso()"><i class="fa-solid fa-trash"></i> Limpiar acceso</button>
     </div>
   </div>
@@ -2206,12 +2206,20 @@ function dtMovsHacia(destId){
   const r=[]; S.accesos.filter(a=>a.activo).forEach(a=>a.movs.forEach(m=>{ if(edDestinoMov(m)===destId) r.push({acc:a.id,m}); }));
   return r;
 }
-function dtBloqueSalida(destId){
-  const b={};
-  dtMovsHacia(destId).forEach(({acc,m})=>{ const bm=dtBloqueMov(acc,m);
-    Object.keys(bm).forEach(ii=>Object.keys(bm[ii]).forEach(n=>{ (b[ii]=b[ii]||{})[n]=((b[ii]||{})[n]||0)+bm[ii][n]; })); });
+function dtSumarEn(b,bm){
+  Object.keys(bm).forEach(ii=>Object.keys(bm[ii]).forEach(n=>{ const f=b[ii]||(b[ii]={}); f[n]=(f[n]||0)+bm[ii][n]; }));
   return b;
 }
+function dtBloqueSalida(destId){
+  const b={}; dtMovsHacia(destId).forEach(({acc,m})=>dtSumarEn(b,dtBloqueMov(acc,m))); return b;
+}
+// Lo que entra por un acceso: la suma de todos sus movimientos
+function dtBloqueEntrada(accId){
+  const a=S.accesos.find(x=>x.id===accId), b={};
+  if(a) a.movs.forEach(m=>dtSumarEn(b,dtBloqueMov(accId,m)));
+  return b;
+}
+function dtNombreAcc(id){ const a=S.accesos.find(x=>x.id===id); return a?a.label:id; }
 function dtBloqueATexto(b){
   const veh=dtVehActivos(), filas=Object.keys(b).map(Number).sort((x,y)=>x-y);
   let t='Intervalo\t'+veh.join('\t')+'\n';
@@ -2257,23 +2265,47 @@ async function dtLeerCopiado(){
 }
 async function dtPegar(accId,m,modo){
   const p=await dtLeerCopiado();
-  if(!p){ notify('<i class="fa-solid fa-circle-info"></i> No hay nada copiado. Primero usa “Copiar movimiento” o “Copiar salida”.',5000); return; }
+  if(!p){ notify('<i class="fa-solid fa-circle-info"></i> No hay nada copiado. Primero usa “Copiar movimiento”, “Copiar salida” o “Copiar entrada”.',5000); return; }
   const veh=dtVehActivos(), acc=S.accesos.find(a=>a.id===accId);
-  const filas=Object.keys(p.bloque).map(Number).sort((x,y)=>x-y);
-  const tot=dtTotalBloque(p.bloque,veh);
   const faltan=p.cols.filter(n=>!veh.includes(n)&&Object.values(p.bloque).some(f=>f[n]>0));
   const actual=dtTotalBloque(dtBloqueMov(accId,m));
-  let msg=`${modo==='sumar'?'Sumar':'Pegar'} en el movimiento ${m} (${acc?acc.label:accId}):\n\n• Origen: ${p.desc}\n• ${tot} vehículos`+(filas.length?`, de ${INTERVALS[filas[0]].slice(0,5)} a ${INTERVALS[filas[filas.length-1]].slice(-5)}`:'')+'\n';
-  if(modo==='reemplazar'&&actual) msg+=`\nSe borrarán los ${actual} vehículos que este movimiento tiene ahora (en todo el día).\n`;
-  if(modo==='sumar') msg+=`\nSe sumarán a los ${actual} vehículos que este movimiento ya tiene.\n`;
+  const filasC=Object.keys(p.bloque).map(Number).sort((x,y)=>x-y);
+  const rango=filasC.length?`de ${INTERVALS[filasC[0]].slice(0,5)} a ${INTERVALS[filasC[filasC.length-1]].slice(-5)}`:'';
+  let bloque=p.bloque, msg;
+  if(modo==='cuadrar'){
+    // Hacia atrás del cruce principal: este movimiento = lo copiado − lo que ya sale por el mismo brazo en este cruce
+    const dst=edDestinoMov(m);
+    if(!dst){ notify(`<i class="fa-solid fa-circle-info"></i> El movimiento ${m} no tiene salida definida. Elígela en “Salida de cada movimiento” del Editor.`,6000); return; }
+    const otros=dtMovsHacia(dst).filter(o=>!(o.acc===accId&&String(o.m)===String(m)));
+    const bo={}; otros.forEach(o=>dtSumarEn(bo,dtBloqueMov(o.acc,o.m)));
+    bloque={}; const neg=[]; let falta=0;
+    if(filasC.length) for(let ii=filasC[0];ii<=filasC[filasC.length-1];ii++) veh.forEach(n=>{
+      const v=((p.bloque[ii]||{})[n]||0)-((bo[ii]||{})[n]||0);
+      if(v>0) (bloque[ii]=bloque[ii]||{})[n]=v;
+      else if(v<0){ falta-=v; if(!neg.includes(ii)) neg.push(ii); }
+    });
+    const totC=dtTotalBloque(p.bloque,veh), totO=dtTotalBloque(bo), totN=dtTotalBloque(bloque);
+    msg=`Cuadrar la salida hacia ${dtNombreAcc(dst)} con el movimiento ${m} (${acc?acc.label:accId}):\n\n`+
+      `• Copiado: ${p.desc}\n  ${totC} vehículos, ${rango}\n`+
+      `• Menos lo que ya sale hacia ${dtNombreAcc(dst)} en este cruce: `+(otros.length?otros.map(o=>`${o.m} (${dtTotalBloque(dtBloqueMov(o.acc,o.m))} veh)`).join(' + '):'ningún otro movimiento')+'\n'+
+      `• Quedaría en el ${m}: ${totN} vehículos\n`;
+    if(neg.length) msg+=`\n⚠ En ${neg.length} intervalo(s) la resta da negativo (faltan ${falta} veh); ahí se deja 0. Revisa: ${neg.slice(0,8).map(ii=>INTERVALS[ii].slice(0,5)).join(', ')}${neg.length>8?'…':''}\n`;
+    if(actual) msg+=`\nSe borrarán los ${actual} vehículos que el ${m} tiene ahora (en todo el día).\n`;
+  } else {
+    msg=`${modo==='sumar'?'Sumar':'Pegar'} en el movimiento ${m} (${acc?acc.label:accId}):\n\n• Origen: ${p.desc}\n• ${dtTotalBloque(p.bloque,veh)} vehículos`+(rango?`, ${rango}`:'')+'\n';
+    if(modo==='reemplazar'&&actual) msg+=`\nSe borrarán los ${actual} vehículos que este movimiento tiene ahora (en todo el día).\n`;
+    if(modo==='sumar') msg+=`\nSe sumarán a los ${actual} vehículos que este movimiento ya tiene.\n`;
+  }
   if(faltan.length) msg+=`\nEstos vehículos no están activos en este cruce y no se pegarán: ${faltan.join(', ')}.\n`;
   if(!confirm(msg+'\n¿Continuar?')) return;
   const D=S.datos[accId]||(S.datos[accId]={});
-  if(modo==='reemplazar') Object.keys(D).forEach(ii=>veh.forEach(n=>{ delete D[ii][`${m}__${n}`]; }));
-  filas.forEach(ii=>veh.forEach(n=>{ const v=p.bloque[ii][n]||0; if(!v) return;
+  if(modo!=='sumar') Object.keys(D).forEach(ii=>veh.forEach(n=>{ delete D[ii][`${m}__${n}`]; }));
+  Object.keys(bloque).map(Number).forEach(ii=>veh.forEach(n=>{ const v=bloque[ii][n]||0; if(!v) return;
     const f=D[ii]||(D[ii]={}), k=`${m}__${n}`; f[k]=(modo==='sumar'?(f[k]||0):0)+v; }));
   markDirty(); renderTabla();
-  notify(`<i class="fa-solid fa-check"></i> ${modo==='sumar'?'Sumado':'Pegado'} en el movimiento ${m}: ahora tiene ${dtTotalBloque(dtBloqueMov(accId,m))} veh.`,5000);
+  let fin=`<i class="fa-solid fa-check"></i> ${modo==='sumar'?'Sumado':modo==='cuadrar'?'Cuadrado':'Pegado'} en el movimiento ${m}: ahora tiene ${dtTotalBloque(dtBloqueMov(accId,m))} veh.`;
+  if(modo==='cuadrar'){ const dst=edDestinoMov(m); fin+=` La salida hacia ${dtNombreAcc(dst)} suma ${dtTotalBloque(dtBloqueSalida(dst))} veh.`; }
+  notify(fin,6500);
 }
 // ── Menú flotante ──
 let _dtItems=[];
@@ -2298,7 +2330,12 @@ function dtMenuMov(ev,accId,m){
     {ico:'fa-copy',txt:'Copiar movimiento',sub:`Todos los vehículos, cada 15 min · ${tot} veh`,fn:()=>dtCopiar(dtBloqueMov(accId,m),`Mov. ${m} (${acc?acc.label:accId}) · ${dtNombreCruce()}`)},
     {sep:true},
     {ico:'fa-paste',txt:'Pegar aquí (reemplazar)',sub:'Borra lo que tiene este movimiento y pone lo copiado',fn:()=>dtPegar(accId,m,'reemplazar')},
-    {ico:'fa-plus',txt:'Pegar sumando',sub:'Suma lo copiado a lo que ya tiene',fn:()=>dtPegar(accId,m,'sumar')}
+    {ico:'fa-plus',txt:'Pegar sumando',sub:'Suma lo copiado a lo que ya tiene',fn:()=>dtPegar(accId,m,'sumar')},
+    ...(()=>{ const dst=edDestinoMov(m); if(!dst) return [];
+      const otros=dtMovsHacia(dst).filter(o=>!(o.acc===accId&&String(o.m)===String(m))).map(o=>o.m);
+      return [{sep:true},{ico:'fa-scale-balanced',txt:'Pegar para cuadrar salida',
+        sub:`Lo copiado${otros.length?' − '+otros.join(' − '):''} (lo que ya sale hacia ${dtNombreAcc(dst)}). Para ir hacia atrás del cruce principal`,
+        fn:()=>dtPegar(accId,m,'cuadrar')}]; })()
   ],'También puedes pegar un bloque copiado de Excel: primera columna con el intervalo (07:00 - 07:15) y una columna por vehículo.');
 }
 function dtMenuSalida(ev){
@@ -2310,7 +2347,13 @@ function dtMenuSalida(ev){
       fn:()=>dtCopiar(dtBloqueSalida(x.id),`Salida hacia ${x.label} (movs. ${mv.map(o=>o.m).join(' + ')}) · ${dtNombreCruce()}`)});
   });
   if(items.length===1) items.push({tit:'No hay movimientos con salida definida.'});
-  dtMenu(ev,items,'Suma, cada 15 min y por vehículo, los movimientos que salen por ese brazo. Usa la salida elegida en “Salida de cada movimiento” del Editor.');
+  items.push({sep:true},{tit:'Copiar entrada'});
+  S.accesos.filter(a=>a.activo&&a.movs.length).forEach(a=>{
+    const b=dtBloqueEntrada(a.id);
+    items.push({ico:'fa-arrow-right-to-bracket',txt:`Entrada por ${a.label}${a.via?' — '+a.via:''}`,sub:`Movs. ${a.movs.join(' + ')} · ${dtTotalBloque(b)} veh`,
+      fn:()=>dtCopiar(dtBloqueEntrada(a.id),`Entrada por ${a.label} (movs. ${a.movs.join(' + ')}) · ${dtNombreCruce()}`)});
+  });
+  dtMenu(ev,items,'Salida: suma los movimientos que salen por ese brazo (usa “Salida de cada movimiento” del Editor). Entrada: suma todos los movimientos de ese acceso. Todo cada 15 min y por vehículo.');
 }
 
 // ══════════════════════════════════════════════════════════════
