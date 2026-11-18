@@ -893,6 +893,55 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 .sal-mov b{font-weight:700;margin-right:4px}
 .sal-fila select{font-family:inherit;font-size:11px;padding:3px;border:1px solid var(--border,#dadce0);border-radius:5px;background:var(--surface,#fff);color:var(--text,#202124);max-width:120px}
 .aforo-table th.th-mov.th-clic{cursor:pointer}
+/* ── Corredor ── */
+.cr-pasos{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.cr-paso{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px 0 6px;border-radius:999px;border:1px solid var(--g-borde);background:var(--g-sup);font-size:13px;font-weight:500;color:var(--text-sec)}
+.cr-paso b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--g-hover);font-size:12px;font-weight:500}
+.cr-paso.on{background:var(--g-azul-claro);border-color:transparent;color:var(--g-azul-texto)}
+.cr-paso.on b{background:var(--g-azul);color:var(--g-sobre-azul)}
+.cr-paso.ok b{background:var(--g-ok-bg);color:var(--g-ok-texto)}
+.cr-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:1050px){.cr-grid{grid-template-columns:1fr}}
+.cr-sub{font-size:13px;color:var(--text-sec);margin-top:4px}
+.cr-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px;margin:12px 0;border:1.5px dashed var(--g-borde);border-radius:10px;background:var(--g-fondo);cursor:pointer;text-align:center;font-size:13px;color:var(--text-sec);transition:background .15s,border-color .15s}
+.cr-drop:hover,.cr-drop.drag{border-color:var(--g-azul);background:var(--g-azul-claro)}
+.cr-drop i{font-size:22px;color:var(--g-azul)}
+.cr-drop b{color:var(--g-texto);font-weight:500}
+.cr-ajustes{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.cr-campo{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;color:var(--text-sec)}
+.cr-campo select,.cr-fila-det select{font-family:inherit;font-size:13px;height:34px;padding:0 8px;border:1px solid var(--g-borde);border-radius:8px;background:var(--g-campo);color:var(--g-texto)}
+.cr-fila-det select{height:28px;font-size:12px}
+.cr-fila{border:1px solid var(--g-divisor);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--g-sup)}
+.cr-fila.ppal{border-color:var(--g-azul);box-shadow:inset 3px 0 0 var(--g-azul)}
+.cr-fila-top{display:flex;align-items:center;gap:8px}
+.cr-num{width:26px;height:26px;border-radius:50%;background:var(--g-hover);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;flex-shrink:0}
+.cr-fila.ppal .cr-num{background:var(--g-azul);color:var(--g-sobre-azul)}
+.cr-nom{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-ico{border:none;background:transparent;width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-sec);flex-shrink:0}
+.cr-ico:hover{background:var(--g-hover)} .cr-ico:disabled{opacity:.3;cursor:default;background:transparent}
+.cr-fila-det{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0 0 34px;font-size:12px;color:var(--text-sec);align-items:center}
+.cr-btn-ppal{border:1px solid var(--g-borde);background:var(--g-sup);color:var(--text-sec);border-radius:999px;height:28px;padding:0 12px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit}
+.cr-btn-ppal.on{background:var(--g-azul-claro);border-color:transparent;color:var(--g-azul-texto)}
+.cr-chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:500;white-space:nowrap}
+.cr-ok{background:var(--g-ok-bg);color:var(--g-ok-texto)} .cr-warn{background:#fef7e0;color:#b06000} .cr-bad{background:#fce8e6;color:#c5221f} .cr-gris{background:var(--g-hover);color:var(--text-sec)}
+.cr-link{border:none;background:none;color:var(--g-azul-texto);font:inherit;font-weight:500;cursor:pointer;padding:0}
+#cr-mapa{height:400px;border-radius:10px;border:1px solid var(--g-divisor);margin-top:12px;background:var(--g-fondo)}
+.cr-mk{width:26px;height:26px;border-radius:50%;background:#1a73e8;color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font:500 13px Roboto,Arial,sans-serif}
+.cr-mk.ppal{background:#174ea6;width:30px;height:30px}
+.cr-vacio{padding:36px 16px;text-align:center;color:var(--text-sec);font-size:13px}
+.cr-vacio i{display:block;font-size:34px;color:var(--g-gris);margin-bottom:8px}
+.cr-tabla-wrap{overflow:auto;margin-top:12px}
+.cr-tabla{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.cr-tabla th{position:sticky;top:0;background:var(--g-fondo);padding:9px 12px;text-align:left;font-size:12px;font-weight:500;color:var(--text-sec);border-bottom:1px solid var(--g-borde);white-space:nowrap}
+.cr-tabla td{padding:9px 12px;border-bottom:1px solid var(--g-divisor);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cr-tabla td.n,.cr-tabla th.n{text-align:right}
+.cr-tabla tr:last-child td{border-bottom:none}
+.cr-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cr-seg{display:inline-flex;border:1px solid var(--g-borde);border-radius:999px;overflow:hidden}
+.cr-seg button{height:32px;padding:0 16px;border:none;border-right:1px solid var(--g-borde);background:var(--g-sup);font:500 13px inherit;color:var(--g-texto);cursor:pointer;font-family:inherit}
+.cr-seg button:last-child{border-right:none} .cr-seg button.on{background:var(--g-azul-claro);color:var(--g-azul-texto)}
+.cr-aviso{display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:8px;background:#fef7e0;color:#7a4a00;font-size:12.5px;margin-top:8px}
+.cr-aviso.info{background:var(--g-azul-claro);color:var(--g-azul-texto)}
 .aforo-table th.th-mov.th-clic:hover{text-decoration:underline;filter:brightness(1.12)}
 #dt-menu{position:fixed;z-index:3000;min-width:250px;max-width:340px;background:var(--surface,#fff);border:1px solid var(--border,#dadce0);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);padding:6px 0;font-size:13px;color:var(--text,#202124)}
 #dt-menu .dtm-tit{padding:6px 14px 4px;font-size:11px;font-weight:600;color:var(--text-sec,#5f6368)}
@@ -1046,6 +1095,7 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
     <button class="tab" onclick="showPage('resultados')"><i class="fa-solid fa-chart-column"></i> Resultados</button>
     <button class="tab" onclick="showPage('graficas')"><i class="fa-solid fa-chart-line"></i> Gráficas</button>
     <button class="tab" onclick="showPage('editor')"><i class="fa-solid fa-pen"></i> Editor</button>
+    <button class="tab" onclick="showPage('corredor')"><i class="fa-solid fa-route"></i> Corredor</button>
     <button class="tab" onclick="showPage('export')"><i class="fa-solid fa-floppy-disk"></i> Exportar</button>
     <button class="tab" onclick="showPage('metodologia')"><i class="fa-solid fa-clipboard-list"></i> Metodología</button>
   </div>
@@ -1445,6 +1495,66 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
     <div class="card-title">Estado del proyecto</div>
     <div id="project-status" style="margin-top:8px"></div>
   </div>
+</div>
+
+<!-- ═══ CORREDOR ═══ -->
+<div class="page" id="page-corredor">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Corredor vial</div>
+      <div class="page-sub">Carga los cruces del eje, revisa si lo que sale de un cruce llega al siguiente y cuádralos desde el cruce principal. Tus archivos originales no se modifican.</div>
+    </div>
+  </div>
+  <div class="cr-pasos">
+    <span class="cr-paso on" id="cr-p1"><b>1</b>Cargar</span>
+    <span class="cr-paso" id="cr-p2"><b>2</b>Revisar</span>
+    <span class="cr-paso" id="cr-p3"><b>3</b>Cuadrar</span>
+  </div>
+  <div class="cr-grid">
+    <div class="card">
+      <div class="card-title">Cruces del corredor</div>
+      <div class="cr-sub">En orden a lo largo del eje. Marca el cruce principal: el que tiene todos los accesos contados.</div>
+      <label class="cr-drop" id="cr-drop">
+        <i class="fa-solid fa-file-import"></i>
+        <b>Arrastra aquí los JSON de cada cruce</b>
+        <span>o haz clic para elegirlos (puedes elegir varios a la vez)</span>
+        <input type="file" accept=".json" multiple class="hidden" onchange="crCargarArchivos(this.files);this.value=''">
+      </label>
+      <div class="cr-ajustes">
+        <label class="cr-campo">Sentido del orden
+          <select id="cr-eje" onchange="crCambiarEje(this.value)">
+            <option value="OE">Oeste → Este</option><option value="EO">Este → Oeste</option>
+            <option value="SN">Sur → Norte</option><option value="NS">Norte → Sur</option>
+          </select>
+        </label>
+        <label class="cr-campo">Turno a revisar
+          <select id="cr-turno" onchange="CR.turno=+this.value;crRender()">
+            <option value="1">Mañana</option><option value="2">Tarde</option><option value="3">Noche</option><option value="0">Madrugada</option>
+          </select>
+        </label>
+      </div>
+      <div id="cr-lista"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Mapa</div>
+      <div class="cr-sub" id="cr-mapa-nota">Los cruces con ubicación guardada aparecen en el mapa.</div>
+      <div id="cr-mapa"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="cr-card-head">
+      <div>
+        <div class="card-title">Continuidad por tramo</div>
+        <div class="cr-sub" id="cr-tabla-sub">Lo que sale de un cruce comparado con lo que entra al siguiente.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="cr-seg" id="cr-seg" style="display:none"><button id="cr-v-orig" onclick="crVista('orig')">Original</button><button id="cr-v-aj" onclick="crVista('aj')">Ajustado</button></div>
+        <button class="btn btn-blue" id="cr-btn-cuadrar" onclick="crCuadrar()"><i class="fa-solid fa-scale-balanced"></i> Cuadrar corredor</button>
+      </div>
+    </div>
+    <div id="cr-tabla"></div>
+  </div>
+  <div class="card" id="cr-res" style="margin-top:16px;display:none"></div>
 </div>
 
 <!-- ═══ METODOLOGÍA ═══ -->
@@ -2196,7 +2306,9 @@ const DT_BUFFER_KEY='aforo_portapapeles';
 function dtVehActivos(){ return S.vehiculos.filter(v=>v.ok).map(v=>v.n); }
 function dtTotalBloque(b,veh){ let t=0; Object.values(b).forEach(f=>Object.keys(f).forEach(n=>{ if(!veh||veh.includes(n)) t+=f[n]||0; })); return t; }
 // Alcance: lo que se copia y pega es el turno elegido arriba de la tabla ("Todos" = todo el día)
+let _dtAlcanceForzado=null;   // el Corredor lee los cruces completos, sin el filtro de turno de la tabla
 function dtAlcance(){
+  if(_dtAlcanceForzado) return _dtAlcanceForzado;
   const tf=document.getElementById('sel-turno')?.value||'all';
   if(tf==='all') return {todo:true,inc:()=>true,nombre:'todo el día'};
   const t=+tf, tr=S.turnos&&S.turnos[t];
@@ -2365,6 +2477,312 @@ function dtMenuSalida(ev){
   });
   dtMenu(ev,items,dtNotaAlcance());
 }
+
+// ══════════════════════════════════════════════════════════════
+//  CORREDOR: varios cruces de un eje. Cargar → Revisar → Cuadrar.
+//  Cada cruce es una sesión aparte; para usar las mismas cuentas de la
+//  tabla (salidas, entradas) se pone la sesión del cruce como S un momento.
+// ══════════════════════════════════════════════════════════════
+let CR={cruces:[],principal:0,eje:'OE',turno:1,aj:null,vista:'orig',log:[],avisos:[]};
+let crMapa=null, crCapa=null, crUbicando=-1;
+const CR_EJES={OE:{prev:'O',next:'E'},EO:{prev:'E',next:'O'},SN:{prev:'S',next:'N'},NS:{prev:'N',next:'S'}};
+const CR_COLOR={ok:'#188038',warn:'#e37400',bad:'#d93025',gris:'#9aa0a6'};
+function crConS(ses,fn){
+  const prev=S, pa=_dtAlcanceForzado;
+  S=ses; _dtAlcanceForzado={todo:true,inc:()=>true,nombre:'todo el día'};
+  try{ return fn(); } finally { S=prev; _dtAlcanceForzado=pa; }
+}
+function crNombre(c){ return (c.ses.gen&&c.ses.gen.inter)||c.archivo.replace(/\.json$/i,''); }
+function crAccNom(c,id){ const a=c.ses.accesos.find(x=>x.id===id); return a?a.label:(id||'—'); }
+function crSesiones(){ return CR.vista==='aj'&&CR.aj?CR.aj:CR.cruces.map(c=>c.ses); }
+
+// ── Cargar ──
+async function crCargarArchivos(files){
+  const lista=[...files].filter(f=>/\.json$/i.test(f.name));
+  for(const f of lista){
+    try{
+      const ses=completarEstado(JSON.parse(await f.text()));
+      const g=ses.flujoGeo;
+      CR.cruces.push({archivo:f.name,ses,lat:g&&g.lat||null,lon:g&&g.lon||null,geo:!!(g&&g.lat&&(g.piernas||[]).some(p=>p.acc))});
+    }catch(e){ notify(`<i class="fa-solid fa-triangle-exclamation"></i> No se pudo leer ${f.name}: ${e.message}`,6000); }
+  }
+  // Orden inicial: por el número con que empieza el nombre del archivo (3_..., 4_..., 5_...)
+  const num=c=>{ const m=c.archivo.match(/^(\d+)/); return m?+m[1]:1e9; };
+  CR.cruces.sort((a,b)=>num(a)-num(b)||a.archivo.localeCompare(b.archivo));
+  crAutoEje(); crAutoConexiones(); crLimpiarAjuste(); crRender();
+}
+// Si hay ubicaciones, elige el sentido del orden según cómo avanzan los cruces en el mapa
+function crAutoEje(){
+  const loc=CR.cruces.filter(c=>c.lat!=null);
+  if(loc.length<2) return;
+  const a=loc[0], b=loc[loc.length-1], dx=(b.lon-a.lon)*Math.cos(a.lat*Math.PI/180), dy=b.lat-a.lat;
+  CR.eje=Math.abs(dx)>=Math.abs(dy)?(dx>=0?'OE':'EO'):(dy>=0?'SN':'NS');
+}
+function crCambiarEje(v){ CR.eje=v; CR.cruces.forEach(c=>{ c.prevManual=c.nextManual=false; }); crAutoConexiones(); crLimpiarAjuste(); crRender(); }
+// Brazo de un cruce que mira en un rumbo (con la ubicación del mapa)
+function crBrazoRumbo(c,rumbo){
+  if(!c.geo) return null;
+  let best=null,bd=999;
+  (c.ses.flujoGeo.piernas||[]).filter(p=>p.acc).forEach(p=>{ const d=Math.abs(((p.rumbo-rumbo+540)%360)-180); if(d<bd){ bd=d; best=p.acc; } });
+  return bd<60?best:null;
+}
+// Para cada cruce: por qué brazo se conecta con el anterior (prev) y con el siguiente (next)
+function crAutoConexiones(){
+  const ej=CR_EJES[CR.eje], n=CR.cruces.length;
+  const rumbo=(a,b)=>mpRumbo({lat:a.lat,lng:a.lon},{lat:b.lat,lng:b.lon});
+  CR.cruces.forEach((c,i)=>{
+    const ids=c.ses.accesos.map(a=>a.id), card=id=>ids.includes(id)?id:null;
+    const ant=CR.cruces[i-1], sig=CR.cruces[i+1];
+    let pv=null, nx=null;
+    if(ant&&ant.lat!=null&&c.lat!=null) pv=crBrazoRumbo(c,rumbo(c,ant));
+    if(sig&&sig.lat!=null&&c.lat!=null) nx=crBrazoRumbo(c,rumbo(c,sig));
+    // En los extremos, el brazo opuesto al que mira al vecino
+    if(!pv&&!ant&&sig&&sig.lat!=null&&c.lat!=null) pv=crBrazoRumbo(c,(rumbo(c,sig)+180)%360);
+    if(!nx&&!sig&&ant&&ant.lat!=null&&c.lat!=null) nx=crBrazoRumbo(c,(rumbo(c,ant)+180)%360);
+    if(!c.prevManual) c.prev=pv||card(ej.prev);
+    if(!c.nextManual) c.next=nx||card(ej.next);
+  });
+}
+function crMover(i,d){ const j=i+d; if(j<0||j>=CR.cruces.length) return;
+  const pp=CR.cruces[CR.principal];
+  [CR.cruces[i],CR.cruces[j]]=[CR.cruces[j],CR.cruces[i]];
+  CR.principal=CR.cruces.indexOf(pp);
+  CR.cruces.forEach(c=>{ c.prevManual=c.nextManual=false; });
+  crAutoConexiones(); crLimpiarAjuste(); crRender(); }
+function crQuitar(i){ const pp=CR.cruces[CR.principal]; CR.cruces.splice(i,1); CR.principal=Math.max(0,CR.cruces.indexOf(pp)); crAutoConexiones(); crLimpiarAjuste(); crRender(); }
+function crPrincipal(i){ CR.principal=i; crLimpiarAjuste(); crRender(); }
+function crSetConex(i,lado,v){ const c=CR.cruces[i]; c[lado]=v||null; c[lado+'Manual']=true; crLimpiarAjuste(); crRender(); }
+function crUbicar(i){ crUbicando=i; notify('<i class="fa-solid fa-location-dot"></i> Haz clic en el mapa donde está el cruce.',5000); }
+
+// ── Cuentas ──
+// Movimiento directo de un acceso hacia un brazo (el que sigue por la troncal)
+function crDirecto(ses,acc,dst){ return crConS(ses,()=>{ const a=S.accesos.find(x=>x.id===acc&&x.activo); return a?a.movs.find(m=>edDestinoMov(m)===dst):undefined; }); }
+function crSalida(ses,brazo){ return crConS(ses,()=>dtBloqueSalida(brazo)); }
+function crEntrada(ses,acc){ return crConS(ses,()=>{ const a=S.accesos.find(x=>x.id===acc&&x.activo); return a?dtBloqueEntrada(acc):{}; }); }
+// Hora a revisar: la hora punta del cruce principal en el turno elegido (la misma hora del reloj para todo el eje)
+function crVentana(){
+  const p=CR.cruces[CR.principal]; if(!p) return null;
+  const ses=crSesiones()[CR.principal], t=CR.turno;
+  const hg=ses.hpGlobal&&ses.hpGlobal[t];
+  if(CR.vista==='orig'&&hg&&hg.row>=3) return {ini:hg.row-3,fin:hg.row};
+  return crConS(ses,()=>{
+    let best=-1,bv=-1;
+    for(let ii=3;ii<INTERVALS.length;ii++){
+      let ok=true; for(let k=ii-3;k<=ii;k++) if(getIntervalTurno(k)!==t){ ok=false; break; }
+      if(!ok) continue;
+      let v=0; S.accesos.filter(a=>a.activo).forEach(a=>{ for(let k=ii-3;k<=ii;k++){ const f=(S.datos[a.id]||{})[k]||{}; a.movs.forEach(m=>dtVehActivos().forEach(n=>v+=f[`${m}__${n}`]||0)); } });
+      if(v>bv){ bv=v; best=ii; }
+    }
+    return best<0?null:{ini:best-3,fin:best};
+  });
+}
+function crSumaVent(b,v){ let t=0; if(v) for(let ii=v.ini;ii<=v.fin;ii++) Object.values(b[ii]||{}).forEach(x=>t+=x); return t; }
+function crTotIntervalo(b,ii){ let t=0; Object.values(b[ii]||{}).forEach(x=>t+=x); return t; }
+function crEstado(sale,entra){
+  if(!sale&&!entra) return {cls:'cr-gris',txt:'Sin datos',k:'gris',pct:null};
+  const pct=sale?(entra-sale)/sale*100:100, a=Math.abs(pct);
+  return a<1?{cls:'cr-ok',txt:'Cuadra',k:'ok',pct}:a<=10?{cls:'cr-warn',txt:'Revisar',k:'warn',pct}:{cls:'cr-bad',txt:'No cuadra',k:'bad',pct};
+}
+// Tramos: entre cada par de cruces, en los dos sentidos
+function crTramos(){
+  const ses=crSesiones(), v=crVentana(), out=[];
+  for(let i=0;i<CR.cruces.length-1;i++){
+    const A=CR.cruces[i], B=CR.cruces[i+1];
+    [[A,B,ses[i],ses[i+1],A.next,B.prev],[B,A,ses[i+1],ses[i],B.prev,A.next]].forEach(([X,Y,sx,sy,brazo,acc],k)=>{
+      const sal=brazo?crSalida(sx,brazo):{}, ent=acc?crEntrada(sy,acc):{};
+      const sale=crSumaVent(sal,v), entra=crSumaVent(ent,v);
+      // intervalos de 15 min del turno que no calzan
+      let malos=0,total=0;
+      crConS(crSesiones()[CR.principal],()=>{ INTERVALS.forEach((_,ii)=>{ if(getIntervalTurno(ii)!==CR.turno) return;
+        const a=crTotIntervalo(sal,ii), b=crTotIntervalo(ent,ii); if(!a&&!b) return; total++; if(a!==b) malos++; }); });
+      const desde=k===0?A.prev:B.next;   // brazo por donde llega la troncal al cruce de origen
+      out.push({i,k,X,Y,brazo,acc,desde,sale,entra,malos,total,est:crEstado(sale,entra)});
+    });
+  }
+  return out;
+}
+
+// ── Cuadrar (sobre copias; los archivos originales no se tocan) ──
+function crLimpiarAjuste(){ CR.aj=null; CR.vista='orig'; CR.log=[]; CR.avisos=[]; }
+function crRestar(base,resta){
+  // base − resta, por intervalo y vehículo, dentro del rango con datos de base; los negativos quedan en 0
+  const filas=Object.keys(base).map(Number).sort((a,b)=>a-b), out={}; let falta=0; const neg=[];
+  if(filas.length) for(let ii=filas[0];ii<=filas[filas.length-1];ii++){
+    const ns=new Set([...Object.keys(base[ii]||{}),...Object.keys(resta[ii]||{})]);
+    ns.forEach(n=>{ const v=((base[ii]||{})[n]||0)-((resta[ii]||{})[n]||0);
+      if(v>0) (out[ii]=out[ii]||{})[n]=v; else if(v<0){ falta-=v; if(!neg.includes(ii)) neg.push(ii); } });
+  }
+  return {bloque:out,falta,neg};
+}
+function crCuadrar(){
+  const n=CR.cruces.length;
+  if(n<2){ notify('<i class="fa-solid fa-circle-info"></i> Carga al menos dos cruces.',4000); return; }
+  const p=CR.principal, aj=CR.cruces.map(c=>JSON.parse(JSON.stringify(c.ses))), log=[], avisos=[];
+  const v=(()=>{ const vv=CR.vista; CR.vista='orig'; const r=crVentana(); CR.vista=vv; return r; })();
+  const nom=k=>`Cruce ${k+1} (${crNombre(CR.cruces[k])})`;
+  // Pone en el movimiento m del acceso acc del cruce k el bloque indicado (todo el día)
+  const fijar=(k,acc,m,r,sentido)=>crConS(aj[k],()=>{
+    const veh=dtVehActivos(), D=S.datos[acc]||(S.datos[acc]={});
+    const antes=crSumaVent(dtBloqueMov(acc,m),v);
+    const fuera=new Set(); Object.values(r.bloque).forEach(f=>Object.keys(f).forEach(x=>{ if(!veh.includes(x)) fuera.add(x); }));
+    Object.keys(D).forEach(ii=>veh.forEach(x=>{ delete D[ii][`${m}__${x}`]; }));
+    Object.keys(r.bloque).forEach(ii=>veh.forEach(x=>{ const val=r.bloque[ii][x]||0; if(val) (D[ii]||(D[ii]={}))[`${m}__${x}`]=val; }));
+    const despues=crSumaVent(dtBloqueMov(acc,m),v);
+    log.push({k,acc,m,sentido,antes,despues,dia:dtTotalBloque(dtBloqueMov(acc,m))});
+    if(r.neg.length) avisos.push(`${nom(k)}, mov. ${m}: en ${r.neg.length} intervalo(s) la resta dio negativo (faltan ${r.falta} veh) y se dejó 0. Revisa: ${r.neg.slice(0,6).map(ii=>INTERVALS[ii].slice(0,5)).join(', ')}${r.neg.length>6?'…':''}.`);
+    if(fuera.size) avisos.push(`${nom(k)}: no tiene activos estos vehículos y no se copiaron: ${[...fuera].join(', ')}.`);
+  });
+  const sumar=(ses,lista)=>crConS(ses,()=>{ const b={}; lista.forEach(o=>dtSumarEn(b,dtBloqueMov(o.acc,o.m))); return b; });
+  // paso: en el cruce k, el directo que entra por "acc" y sale por "dst"
+  const paso=(k,acc,dst,base,modo,sentido)=>{
+    const C=CR.cruces[k];
+    if(!acc||!dst){ avisos.push(`${nom(k)}: falta indicar los brazos de la troncal.`); return; }
+    const m=crDirecto(aj[k],acc,dst);
+    if(m===undefined){ avisos.push(`${nom(k)}: el acceso ${crAccNom(C,acc)} no tiene un movimiento directo hacia ${crAccNom(C,dst)} (actívalo en Config). No se ajustó ese sentido.`); return; }
+    let otros;
+    if(modo==='adelante'){   // entra todo lo que salió del cruce anterior: directo = lo copiado − giros que salen de la troncal
+      otros=crConS(aj[k],()=>S.accesos.find(a=>a.id===acc).movs.filter(x=>x!==m).map(x=>({acc,m:x})));
+    } else {                 // sale lo que debe entrar al siguiente: directo = lo copiado − giros que entran a la troncal
+      otros=crConS(aj[k],()=>dtMovsHacia(dst).filter(o=>!(o.acc===acc&&String(o.m)===String(m))));
+    }
+    fijar(k,acc,m,crRestar(base,sumar(aj[k],otros)),sentido);
+  };
+  const C=CR.cruces;
+  const s1=`${crAccNom(C[0],C[0].prev)} → ${crAccNom(C[0],C[0].next)}`, s2=`${crAccNom(C[0],C[0].next)} → ${crAccNom(C[0],C[0].prev)}`;
+  // Sentido 1 (en el orden 1 → n)
+  for(let k=p+1;k<n;k++) paso(k,C[k].prev,C[k].next,crSalida(aj[k-1],C[k-1].next),'adelante',s1);
+  for(let k=p-1;k>=0;k--) paso(k,C[k].prev,C[k].next,crEntrada(aj[k+1],C[k+1].prev),'atras',s1);
+  // Sentido 2 (en el orden n → 1)
+  for(let k=p-1;k>=0;k--) paso(k,C[k].next,C[k].prev,crSalida(aj[k+1],C[k+1].prev),'adelante',s2);
+  for(let k=p+1;k<n;k++) paso(k,C[k].next,C[k].prev,crEntrada(aj[k-1],C[k-1].next),'atras',s2);
+  CR.aj=aj; CR.log=log; CR.avisos=avisos; CR.vista='aj';
+  crRender();
+  document.getElementById('cr-res').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function crVista(v){ if(v==='aj'&&!CR.aj) return; CR.vista=v; crRender(); }
+function crNombreAjustado(k){ return CR.cruces[k].archivo.replace(/\.json$/i,'')+'_ajustado.json'; }
+function crJSON(k){ return JSON.stringify(CR.aj[k],null,2); }
+function crDescargar(k){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([crJSON(k)],{type:'application/json'}));
+  a.download=crNombreAjustado(k); a.click();
+}
+function crCargarJSZip(){
+  if(window.JSZip) return Promise.resolve();
+  const s=src=>new Promise((ok,mal)=>{ const e=document.createElement('script'); e.src=src; e.onload=ok; e.onerror=()=>{ e.remove(); mal(); }; document.head.appendChild(e); });
+  return s('vendor/jszip/jszip.min.js').catch(()=>s('https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'));
+}
+async function crDescargarTodos(){
+  if(!CR.aj) return;
+  try{
+    await crCargarJSZip();
+    const zip=new JSZip(); CR.aj.forEach((_,k)=>zip.file(crNombreAjustado(k),crJSON(k)));
+    const blob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='corredor_ajustado.zip'; a.click();
+  }catch(e){ CR.aj.forEach((_,k)=>crDescargar(k)); }
+}
+
+// ── Pantalla ──
+function crRender(){
+  const n=CR.cruces.length;
+  const sel=document.getElementById('cr-eje'); if(sel) sel.value=CR.eje;
+  const st=document.getElementById('cr-turno'); if(st) st.value=String(CR.turno);
+  document.getElementById('cr-p1').className='cr-paso '+(n>=2?'ok':'on');
+  document.getElementById('cr-p2').className='cr-paso '+(n>=2&&!CR.aj?'on':CR.aj?'ok':'');
+  document.getElementById('cr-p3').className='cr-paso '+(CR.aj?'on':'');
+  crRenderLista(); crRenderTabla(); crRenderRes(); crRenderMapa();
+}
+function crRenderLista(){
+  const el=document.getElementById('cr-lista'), n=CR.cruces.length;
+  if(!n){ el.innerHTML='<div class="cr-vacio"><i class="fa-solid fa-road"></i>Todavía no hay cruces. Carga los JSON de los cruces del eje.</div>'; return; }
+  el.innerHTML=CR.cruces.map((c,i)=>{
+    const ops=(v)=>`<option value="">—</option>`+c.ses.accesos.map(a=>`<option value="${a.id}" ${a.id===v?'selected':''}>${a.label}${a.activo?'':' (solo salida)'}</option>`).join('');
+    const d1=c.prev&&c.next?crDirecto(c.ses,c.prev,c.next):undefined, d2=c.prev&&c.next?crDirecto(c.ses,c.next,c.prev):undefined;
+    const tron=`Troncal: ${crAccNom(c,c.prev)} → ${crAccNom(c,c.next)} <b>${d1!==undefined?d1:'sin directo'}</b> · ${crAccNom(c,c.next)} → ${crAccNom(c,c.prev)} <b>${d2!==undefined?d2:'sin directo'}</b>`;
+    const ubic=c.lat!=null?`<span class="cr-chip cr-gris"><i class="fa-solid fa-location-dot"></i> ${c.geo?'Ubicado':'Ubicado a mano'}</span>`:`<span class="cr-chip cr-warn">Sin ubicación</span> <button class="cr-link" onclick="crUbicar(${i})">Ubicar en el mapa</button>`;
+    return `<div class="cr-fila ${i===CR.principal?'ppal':''}">
+      <div class="cr-fila-top">
+        <span class="cr-num">${i+1}</span>
+        <span class="cr-nom" title="${c.archivo}">${crNombre(c)}</span>
+        <button class="cr-btn-ppal ${i===CR.principal?'on':''}" onclick="crPrincipal(${i})">${i===CR.principal?'<i class="fa-solid fa-star"></i> Principal':'Hacer principal'}</button>
+        <button class="cr-ico" title="Subir" onclick="crMover(${i},-1)" ${i===0?'disabled':''}><i class="fa-solid fa-arrow-up"></i></button>
+        <button class="cr-ico" title="Bajar" onclick="crMover(${i},1)" ${i===n-1?'disabled':''}><i class="fa-solid fa-arrow-down"></i></button>
+        <button class="cr-ico" title="Quitar" onclick="crQuitar(${i})"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="cr-fila-det">
+        <label>${i>0?'Llega del cruce '+i:'Brazo de inicio'}: <select onchange="crSetConex(${i},'prev',this.value)">${ops(c.prev)}</select></label>
+        <label>${i<n-1?'Sigue al cruce '+(i+2):'Brazo de salida final'}: <select onchange="crSetConex(${i},'next',this.value)">${ops(c.next)}</select></label>
+        ${ubic}
+      </div>
+      <div class="cr-fila-det">${tron}</div>
+    </div>`;
+  }).join('');
+}
+function crRenderTabla(){
+  const el=document.getElementById('cr-tabla'), sub=document.getElementById('cr-tabla-sub');
+  const seg=document.getElementById('cr-seg'); seg.style.display=CR.aj?'':'none';
+  document.getElementById('cr-v-orig').className=CR.vista==='orig'?'on':''; document.getElementById('cr-v-aj').className=CR.vista==='aj'?'on':'';
+  document.getElementById('cr-btn-cuadrar').disabled=CR.cruces.length<2;
+  if(CR.cruces.length<2){ el.innerHTML='<div class="cr-vacio"><i class="fa-solid fa-arrows-left-right"></i>Carga al menos dos cruces para revisar la continuidad.</div>'; sub.textContent='Lo que sale de un cruce comparado con lo que entra al siguiente.'; return; }
+  const v=crVentana(), t=CR.turno;
+  sub.innerHTML=v?`Hora punta del cruce principal, turno ${TURNO_NAMES[t]}: <b>${INTERVALS[v.ini].slice(0,5)}–${INTERVALS[v.fin].slice(-5)}</b>. La misma hora para todos los cruces.`+(CR.vista==='aj'?' <b>Vista: datos ajustados.</b>':''):`El cruce principal no tiene datos en el turno ${TURNO_NAMES[t]}.`;
+  const filas=crTramos().map(r=>{
+    const pct=r.est.pct==null?'—':(r.est.pct>0?'+':'')+r.est.pct.toFixed(1).replace('.0','')+' %';
+    const iv=r.total?(r.malos?`<span class="cr-chip ${r.malos===r.total?'cr-bad':'cr-warn'}">${r.total-r.malos} de ${r.total}</span>`:`<span class="cr-chip cr-ok">Todos</span>`):'—';
+    return `<tr><td>${r.k===0?`${r.i+1} → ${r.i+2}`:`${r.i+2} → ${r.i+1}`}</td>
+      <td>${crAccNom(r.X,r.desde)} → ${crAccNom(r.X,r.brazo)}</td>
+      <td class="n">${r.sale}</td><td class="n">${r.entra}</td><td class="n">${pct}</td>
+      <td><span class="cr-chip ${r.est.cls}">${r.est.txt}</span></td><td>${iv}</td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="cr-tabla-wrap"><table class="cr-tabla"><thead><tr><th>Tramo</th><th>Sentido</th><th class="n">Sale del cruce</th><th class="n">Entra al siguiente</th><th class="n">Diferencia</th><th>Estado</th><th>Intervalos de 15 min que calzan</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+}
+function crRenderRes(){
+  const el=document.getElementById('cr-res');
+  if(!CR.aj){ el.style.display='none'; return; }
+  el.style.display='';
+  const v=(()=>{ const vv=CR.vista; CR.vista='orig'; const r=crVentana(); CR.vista=vv; return r; })();
+  const filas=CR.log.slice().sort((a,b)=>a.k-b.k).map(l=>{ const c=CR.cruces[l.k];
+    return `<tr><td>${l.k+1} · ${crNombre(c)}</td><td>${l.sentido}</td><td>${crAccNom(c,l.acc)} · ${l.m}</td><td class="n">${l.antes}</td><td class="n">${l.antes===l.despues?'<span class="cr-chip cr-gris">Sin cambio</span>':`<b>${l.despues}</b>`}</td><td class="n">${l.dia}</td><td><button class="cr-link" onclick="crDescargar(${l.k})"><i class="fa-solid fa-download"></i> ${crNombreAjustado(l.k)}</button></td></tr>`; }).join('');
+  const sinCambio=CR.cruces.map((c,k)=>k).filter(k=>!CR.log.some(l=>l.k===k));
+  el.innerHTML=`<div class="cr-card-head"><div><div class="card-title">Resultado del ajuste</div>
+      <div class="cr-sub">Movimientos de la troncal que se llenaron o corrigieron. Valores de la hora ${v?INTERVALS[v.ini].slice(0,5)+'–'+INTERVALS[v.fin].slice(-5):''}; se ajustó todo el día, cada 15 min y por vehículo.</div></div>
+      <button class="btn" onclick="crDescargarTodos()"><i class="fa-solid fa-file-zipper"></i> Descargar todos (.zip)</button></div>
+    ${filas?`<div class="cr-tabla-wrap"><table class="cr-tabla"><thead><tr><th>Cruce</th><th>Sentido</th><th>Acceso · mov.</th><th class="n">Antes</th><th class="n">Después</th><th class="n">Todo el día</th><th>Archivo</th></tr></thead><tbody>${filas}</tbody></table></div>`:'<div class="cr-vacio">No se cambió ningún movimiento.</div>'}
+    ${sinCambio.map(k=>`<div class="cr-aviso info"><i class="fa-solid fa-circle-info"></i><span>Cruce ${k+1} (${crNombre(CR.cruces[k])}) ${k===CR.principal?'es el principal: ':''}no cambia. <button class="cr-link" onclick="crDescargar(${k})">Descargar igual</button></span></div>`).join('')}
+    ${CR.avisos.map(a=>`<div class="cr-aviso"><i class="fa-solid fa-triangle-exclamation"></i><span>${a}</span></div>`).join('')}
+    <div class="cr-aviso info"><i class="fa-solid fa-lightbulb"></i><span>Abre cada archivo ajustado en AforoCore y aprieta <b>Calcular HP</b>; al entrar al Editor, el dibujo toma los números nuevos.</span></div>`;
+}
+function crRenderMapa(){
+  const cont=document.getElementById('cr-mapa'); if(!cont||!document.getElementById('page-corredor').classList.contains('active')) return;
+  const loc=CR.cruces.map((c,i)=>({c,i})).filter(o=>o.c.lat!=null);
+  document.getElementById('cr-mapa-nota').textContent=!CR.cruces.length?'Los cruces con ubicación guardada aparecen en el mapa.':
+    loc.length<CR.cruces.length?`${CR.cruces.length-loc.length} cruce(s) sin ubicación: usa “Ubicar en el mapa” o el orden de la lista.`:'Cada línea es un tramo, con el color de su peor sentido.';
+  mpCargarLeaflet().then(()=>{
+    if(!crMapa){
+      crMapa=L.map(cont,{zoomControl:true}).setView([-12.05,-77.04],5);
+      L.tileLayer(MP_FONDOS.osm.url,{maxZoom:19,attribution:MP_FONDOS.osm.attr}).addTo(crMapa);
+      crCapa=L.layerGroup().addTo(crMapa);
+      crMapa.on('click',e=>{ if(crUbicando<0) return; const c=CR.cruces[crUbicando]; c.lat=e.latlng.lat; c.lon=e.latlng.lng; crUbicando=-1; crRender(); });
+    }
+    setTimeout(()=>crMapa.invalidateSize(),50);
+    crCapa.clearLayers();
+    const tr=CR.cruces.length>=2?crTramos():[], peor={};
+    const rango={gris:0,ok:1,warn:2,bad:3};
+    tr.forEach(r=>{ if(peor[r.i]==null||rango[r.est.k]>rango[peor[r.i]]) peor[r.i]=r.est.k; });
+    for(let i=0;i<CR.cruces.length-1;i++){ const a=CR.cruces[i], b=CR.cruces[i+1]; if(a.lat==null||b.lat==null) continue;
+      L.polyline([[a.lat,a.lon],[b.lat,b.lon]],{color:CR_COLOR[peor[i]||'gris'],weight:7,opacity:.85}).addTo(crCapa); }
+    loc.forEach(({c,i})=>L.marker([c.lat,c.lon],{icon:L.divIcon({className:'',html:`<div class="cr-mk ${i===CR.principal?'ppal':''}">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]})})
+      .bindTooltip(`${i+1} · ${crNombre(c)}`).addTo(crCapa));
+    if(loc.length===1) crMapa.setView([loc[0].c.lat,loc[0].c.lon],17);
+    else if(loc.length>1) crMapa.fitBounds(L.latLngBounds(loc.map(o=>[o.c.lat,o.c.lon])).pad(0.3));
+  }).catch(()=>{ document.getElementById('cr-mapa-nota').textContent='No se pudo cargar el mapa (sin internet). El resto funciona igual.'; });
+}
+// Arrastrar y soltar archivos
+document.addEventListener('DOMContentLoaded',()=>{
+  const d=document.getElementById('cr-drop'); if(!d) return;
+  ['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,e=>{ e.preventDefault(); d.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{ e.preventDefault(); d.classList.remove('drag'); }));
+  d.addEventListener('drop',e=>crCargarArchivos(e.dataTransfer.files));
+});
 
 // ══════════════════════════════════════════════════════════════
 //  PEATONAL
@@ -4340,7 +4758,7 @@ function showPage(p){
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.getElementById(`page-${p}`).classList.add('active');
   const tabs=document.querySelectorAll('.tab');
-  const pages=['config','datos','peatonal','resultados','graficas','editor','export','metodologia'];
+  const pages=['config','datos','peatonal','resultados','graficas','editor','corredor','export','metodologia'];
   const idx=pages.indexOf(p);
   if(idx>=0) tabs[idx].classList.add('active');
   if(p==='datos') populateAccesoSel();
@@ -4354,6 +4772,7 @@ function showPage(p){
       else notify('<i class="fa-solid fa-circle-info"></i> Los números del dibujo no coinciden con ninguna hora punta. Elige el turno en el panel “Hora punta” para actualizarlos.',6500);
     } }
   if(p==='export') updateProjectStatus();
+  if(p==='corredor') crRender();
 }
 
 // ══════════════════════════════════════════════════════════════
