@@ -928,6 +928,28 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 #cr-mapa{height:400px;border-radius:10px;border:1px solid var(--g-divisor);margin-top:12px;background:var(--g-fondo)}
 .cr-mk{width:26px;height:26px;border-radius:50%;background:#1a73e8;color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font:500 13px Roboto,Arial,sans-serif}
 .cr-mk.ppal{background:#174ea6;width:30px;height:30px}
+.cr-fila-cuerpo{display:flex;gap:12px;align-items:flex-start}
+.cr-fila-info{flex:1;min-width:0}
+.cr-mini{flex-shrink:0;width:156px;height:117px;margin-top:8px;border:1px solid var(--g-divisor);border-radius:8px;overflow:hidden;background:var(--g-fondo);cursor:zoom-in;padding:0;position:relative;font-family:inherit}
+.cr-mini:hover{border-color:var(--g-azul);box-shadow:0 1px 3px rgba(60,64,67,.3)}
+.cr-mini img{width:100%;height:100%;object-fit:cover;display:block}
+.cr-mini-et{position:absolute;left:6px;bottom:6px;height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);color:#202124;box-shadow:0 1px 2px rgba(60,64,67,.3)}
+.cr-mini-et.aj{background:#fef7e0;color:#b06000}
+.cr-mini.vacio{cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11.5px;color:var(--text-sec);text-align:center;padding:8px}
+.cr-mini.vacio:hover{border-color:var(--g-divisor);box-shadow:none}
+.cr-mini.vacio i{font-size:20px;color:var(--g-gris)}
+#cr-dib-ov{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;background:rgba(32,33,36,.55);padding:16px}
+#cr-dib-ov.show{display:flex}
+.cr-dib-modal{background:var(--g-sup);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.3);width:min(1120px,100%);max-height:96vh;display:flex;flex-direction:column;overflow:hidden}
+.cr-dib-cab{display:flex;align-items:center;gap:10px;padding:12px 12px 10px 16px;border-bottom:1px solid var(--g-divisor);flex-wrap:wrap}
+.cr-dib-tit{flex:1;min-width:200px}
+.cr-dib-img{flex:1;min-height:0;overflow:auto;background:var(--g-fondo);display:flex;align-items:center;justify-content:center;padding:8px}
+.cr-dib-img img{max-width:100%;max-height:calc(96vh - 150px);display:block;border-radius:6px;transition:opacity .15s}
+.cr-dib-pie{padding:10px 16px;font-size:12.5px;color:var(--text-sec);display:flex;gap:6px 18px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--g-divisor)}
+.cr-ley{display:inline-block;width:12px;height:12px;border:2px solid #e8710a;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.cr-pop{font:13px Roboto,Arial,sans-serif;width:264px}
+.cr-pop img{width:264px;border-radius:6px;display:block;margin:6px 0;cursor:zoom-in;border:1px solid #dadce0}
+.cr-pop .cr-sub{margin:6px 0}
 .cr-vacio{padding:36px 16px;text-align:center;color:var(--text-sec);font-size:13px}
 .cr-vacio i{display:block;font-size:34px;color:var(--g-gris);margin-bottom:8px}
 .cr-tabla-wrap{overflow:auto;margin-top:12px}
@@ -1654,6 +1676,20 @@ html[data-tema="oscuro"] .apexcharts-toolbar svg{fill:var(--g-texto-2)}
 </div><!-- app-body -->
 
 <!-- ═══ SESSION MODAL ═══ -->
+<div id="cr-dib-ov" onclick="if(event.target===this)crCerrarDibujo()">
+  <div class="cr-dib-modal" role="dialog" aria-label="Dibujo del cruce">
+    <div class="cr-dib-cab">
+      <button class="cr-ico" title="Cruce anterior" id="cr-dib-ant" onclick="crVerDibujo(crDib.k-1)"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="cr-dib-tit"><div class="card-title" id="cr-dib-titulo"></div><div class="cr-sub" id="cr-dib-sub"></div></div>
+      <div class="cr-seg" id="cr-dib-seg"><button id="cr-dib-orig" onclick="crDibVista('orig')">Original</button><button id="cr-dib-aj" onclick="crDibVista('aj')">Ajustado</button></div>
+      <button class="cr-ico" title="Cruce siguiente" id="cr-dib-sig" onclick="crVerDibujo(crDib.k+1)"><i class="fa-solid fa-chevron-right"></i></button>
+      <button class="cr-ico" title="Cerrar" onclick="crCerrarDibujo()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="cr-dib-img"><img id="cr-dib-img" alt="Dibujo del cruce"></div>
+    <div class="cr-dib-pie" id="cr-dib-pie"></div>
+  </div>
+</div>
+
 <div id="session-overlay" class="show">
   <div id="session-modal">
     <div class="sm-title">Aforo<span style="color:var(--text)">Core</span></div>
@@ -2713,14 +2749,19 @@ function crRenderLista(){
         <button class="cr-ico" title="Bajar" onclick="crMover(${i},1)" ${i===n-1?'disabled':''}><i class="fa-solid fa-arrow-down"></i></button>
         <button class="cr-ico" title="Quitar" onclick="crQuitar(${i})"><i class="fa-solid fa-xmark"></i></button>
       </div>
+      <div class="cr-fila-cuerpo"><div class="cr-fila-info">
       <div class="cr-fila-det">
         <label>${i>0?'Llega del cruce '+i:'Brazo de inicio'}: <select onchange="crSetConex(${i},'prev',this.value)">${ops(c.prev)}</select></label>
         <label>${i<n-1?'Sigue al cruce '+(i+2):'Brazo de salida final'}: <select onchange="crSetConex(${i},'next',this.value)">${ops(c.next)}</select></label>
         ${ubic}
       </div>
       <div class="cr-fila-det">${tron}</div>
+      </div>${crTieneDibujo(c.ses)
+        ?`<button class="cr-mini" title="Ver el dibujo del cruce" onclick="crVerDibujo(${i})"><img id="cr-mini-${i}" alt=""><span class="cr-mini-et ${CR.vista==='aj'?'aj':''}"><i class="fa-solid fa-magnifying-glass-plus"></i> ${CR.vista==='aj'?'Ajustado':'Dibujo'}</span></button>`
+        :`<div class="cr-mini vacio"><i class="fa-regular fa-image"></i>Sin dibujo en el Editor</div>`}</div>
     </div>`;
   }).join('');
+  crPintarMinis();
 }
 function crRenderTabla(){
   const el=document.getElementById('cr-tabla'), sub=document.getElementById('cr-tabla-sub');
@@ -2775,12 +2816,133 @@ function crRenderMapa(){
     tr.forEach(r=>{ if(peor[r.i]==null||rango[r.est.k]>rango[peor[r.i]]) peor[r.i]=r.est.k; });
     for(let i=0;i<CR.cruces.length-1;i++){ const a=CR.cruces[i], b=CR.cruces[i+1]; if(a.lat==null||b.lat==null) continue;
       L.polyline([[a.lat,a.lon],[b.lat,b.lon]],{color:CR_COLOR[peor[i]||'gris'],weight:7,opacity:.85}).addTo(crCapa); }
-    loc.forEach(({c,i})=>L.marker([c.lat,c.lon],{icon:L.divIcon({className:'',html:`<div class="cr-mk ${i===CR.principal?'ppal':''}">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]})})
-      .bindTooltip(`${i+1} · ${crNombre(c)}`).addTo(crCapa));
+    loc.forEach(({c,i})=>{
+      const mk=L.marker([c.lat,c.lon],{icon:L.divIcon({className:'',html:`<div class="cr-mk ${i===CR.principal?'ppal':''}">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]})})
+        .bindTooltip(`${i+1} · ${crNombre(c)}`).addTo(crCapa);
+      const div=document.createElement('div'); div.className='cr-pop';
+      const tiene=crTieneDibujo(c.ses);
+      div.innerHTML=`<b>${i+1} · ${crNombre(c)}</b>${tiene?'<img alt="Dibujo del cruce" title="Ver en grande">':'<div class="cr-sub">Este cruce no tiene dibujo en el Editor.</div>'}`+
+        (tiene?`<button class="cr-link"><i class="fa-solid fa-magnifying-glass-plus"></i> Ver en grande</button>`:'');
+      div.querySelectorAll('img,button').forEach(b=>b.onclick=()=>{ crMapa.closePopup(); crVerDibujo(i); });
+      mk.bindPopup(div,{maxWidth:300,minWidth:264});
+      mk.on('popupopen',()=>{ const im=div.querySelector('img'); if(!im) return;
+        crDibujoURL(i,CR.vista).then(u=>{ if(!u) return; im.onload=()=>mk.getPopup()&&mk.getPopup().update(); im.src=u; }); });
+    });
     if(loc.length===1) crMapa.setView([loc[0].c.lat,loc[0].c.lon],17);
     else if(loc.length>1) crMapa.fitBounds(L.latLngBounds(loc.map(o=>[o.c.lat,o.c.lon])).pad(0.3));
   }).catch(()=>{ document.getElementById('cr-mapa-nota').textContent='No se pudo cargar el mapa (sin internet). El resto funciona igual.'; });
 }
+// ── Dibujo de cada cruce (el del Editor), con los valores de la hora que se revisa ──
+const crDibCache=new WeakMap();
+const CR_COLOR_CAMBIO='#E8710A';
+let crDib={k:0,vista:'orig'};
+function crTieneDibujo(ses){ const e=ses&&ses.editorState; return !!(e&&((e.elements||[]).length||e.bgImage)); }
+function crVentanaOrig(){ const vv=CR.vista; CR.vista='orig'; const r=crVentana(); CR.vista=vv; return r; }
+// Valor de cada etiqueta de flujo del dibujo en la ventana v (mismo cálculo que el Editor)
+function crValoresHP(ses,v){
+  const out={}; if(!v||!crTieneDibujo(ses)) return out;
+  return crConS(ses,()=>{
+    const t=CR.turno, hg0=S.hpGlobal, hp0=S.hp;
+    const hg=(hg0||[]).slice(); hg[t]=Object.assign({},hg[t]||{t},{row:v.fin});
+    S.hpGlobal=hg; if(!S.hp) S.hp={};
+    try{ (S.editorState.elements||[]).forEach(e=>{ if(e.type!=='hpval'||e.valorManual||String(e.movCode).startsWith('PEAT_')) return; out[e.id]=edGetHPVal(e.movCode,t)||0; }); }
+    finally{ S.hpGlobal=hg0; S.hp=hp0; }
+    return out;
+  });
+}
+function crCargarImg(src){ return new Promise(r=>{ if(!src) return r(null); const im=new Image(); im.onload=()=>r(im); im.onerror=()=>r(null); im.src=src; }); }
+// Devuelve el dibujo como imagen. En "Ajustado", las etiquetas que cambiaron van en naranja con el valor de antes.
+async function crDibujoURL(k,vista){
+  const C=CR.cruces[k]; if(!C) return null;
+  const aj=vista==='aj'&&CR.aj;
+  const ses=aj?CR.aj[k]:C.ses;
+  if(!crTieneDibujo(ses)) return null;
+  const v=crVentanaOrig(), key=`${aj?'aj':'orig'}|${CR.turno}|${v?v.ini+'-'+v.fin:'-'}`;
+  const cache=crDibCache.get(ses)||{}; if(cache[key]) return cache[key];
+  const es=ses.editorState, els=es.elements||[], bg=await crCargarImg(es.bgImage);
+  let W,H,ox=0,oy=0;
+  if(bg){ W=bg.naturalWidth; H=bg.naturalHeight; }
+  else {
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    els.forEach(e=>Object.keys(e).forEach(p=>{ const val=e[p]; if(typeof val!=='number') return;
+      if(/^(x|x1|x2|cx|cx1|cx2)$/.test(p)){ x0=Math.min(x0,val); x1=Math.max(x1,val); }
+      if(/^(y|y1|y2|cy|cy1|cy2)$/.test(p)){ y0=Math.min(y0,val); y1=Math.max(y1,val); } }));
+    if(!isFinite(x0)){ x0=0;y0=0;x1=800;y1=600; }
+    ox=80-x0; oy=80-y0; W=x1-x0+160; H=y1-y0+160;
+  }
+  const sc=Math.min(1,1600/Math.max(W,H));
+  const cv=document.createElement('canvas'); cv.width=Math.round(W*sc); cv.height=Math.round(H*sc);
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.save(); ctx.scale(sc,sc); ctx.translate(ox,oy);
+  if(bg) ctx.drawImage(bg,0,0);
+  const vals=crValoresHP(ses,v), antes=aj?crValoresHP(C.ses,v):null;
+  const ctxEd=edCtx; edCtx=ctx;
+  try{
+    crConS(ses,()=>els.forEach(el=>{
+      if(el.type!=='hpval'){ edDrawEl(el,false); return; }
+      const val=vals[el.id]!=null?vals[el.id]:el.value;
+      const cambio=antes&&antes[el.id]!=null&&antes[el.id]!==val;
+      edDrawEl(Object.assign({},el,{value:val},cambio?{color:CR_COLOR_CAMBIO}:{}),false);
+      if(cambio){
+        const fs=el.fontSize||13, t=`antes ${antes[el.id]}`;
+        ctx.save(); ctx.translate(el.x,el.y); ctx.rotate((el.rotation||0)*Math.PI/180);
+        ctx.font=`bold ${Math.round(fs*.8)}px -apple-system,monospace`; ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.95)'; ctx.strokeText(t,0,fs/2+9);
+        ctx.fillStyle=CR_COLOR_CAMBIO; ctx.fillText(t,0,fs/2+9); ctx.restore();
+      }
+    }));
+  } finally { edCtx=ctxEd; }
+  ctx.restore();
+  const url=cv.toDataURL('image/jpeg',0.88);
+  cache[key]=url; crDibCache.set(ses,cache);
+  return url;
+}
+function crPintarMinis(){
+  CR.cruces.forEach((c,k)=>{
+    const im=document.getElementById('cr-mini-'+k); if(!im) return;
+    const marca=`${CR.vista}|${CR.turno}|${crNombre(c)}`; im.dataset.marca=marca;
+    crDibujoURL(k,CR.vista).then(u=>{ if(u&&im.dataset.marca===marca) im.src=u; });
+  });
+}
+function crVerDibujo(k,vista){
+  if(k<0||k>=CR.cruces.length) return;
+  const abierto=document.getElementById('cr-dib-ov').classList.contains('show');
+  crDib={k,vista:vista||(abierto?crDib.vista:CR.vista)};
+  if(crDib.vista==='aj'&&!CR.aj) crDib.vista='orig';
+  document.getElementById('cr-dib-ov').classList.add('show');
+  crPintarVisor();
+}
+function crDibVista(v){ if(v==='aj'&&!CR.aj) return; crDib.vista=v; crPintarVisor(); }
+function crCerrarDibujo(){ document.getElementById('cr-dib-ov').classList.remove('show'); }
+function crPintarVisor(){
+  const {k,vista}=crDib, C=CR.cruces[k], n=CR.cruces.length, v=crVentanaOrig();
+  document.getElementById('cr-dib-titulo').textContent=`${k+1} · ${crNombre(C)}`;
+  document.getElementById('cr-dib-sub').innerHTML=(k===CR.principal?'<b>Cruce principal</b> · ':'')+
+    (v?`Valores de ${INTERVALS[v.ini].slice(0,5)}–${INTERVALS[v.fin].slice(-5)} (turno ${TURNO_NAMES[CR.turno]}), la hora punta del cruce principal`:`Sin hora punta en el turno ${TURNO_NAMES[CR.turno]}`);
+  document.getElementById('cr-dib-seg').style.display=CR.aj?'':'none';
+  document.getElementById('cr-dib-orig').className=vista==='orig'?'on':'';
+  document.getElementById('cr-dib-aj').className=vista==='aj'?'on':'';
+  document.getElementById('cr-dib-ant').disabled=k===0;
+  document.getElementById('cr-dib-sig').disabled=k===n-1;
+  const img=document.getElementById('cr-dib-img'), pie=document.getElementById('cr-dib-pie');
+  const ses=vista==='aj'&&CR.aj?CR.aj[k]:C.ses;
+  if(!crTieneDibujo(ses)){ img.removeAttribute('src'); img.style.display='none';
+    pie.innerHTML='<span><i class="fa-regular fa-image"></i> Este cruce no tiene dibujo. Hazlo en la pestaña Editor del archivo del cruce y vuelve a cargarlo aquí.</span>'; return; }
+  img.style.display=''; img.style.opacity=.4;
+  const cambios=vista==='aj'?CR.log.filter(l=>l.k===k&&l.antes!==l.despues):[];
+  pie.innerHTML=vista==='aj'
+    ?(cambios.length?`<span><span class="cr-ley"></span>En naranja: valores que cambió el ajuste, con el valor de antes.</span>`+cambios.map(l=>`<span>${crAccNom(C,l.acc)} · ${l.m}: ${l.antes} → <b>${l.despues}</b></span>`).join('')
+      :'<span><i class="fa-solid fa-circle-check" style="color:var(--g-ok-texto)"></i> El ajuste no cambió este cruce.</span>')
+    :'<span>Datos tal como están en el archivo.</span>'+(CR.aj?'<span>Cambia a <b>Ajustado</b> para ver los valores después de cuadrar.</span>':'');
+  crDibujoURL(k,vista).then(u=>{ if(crDib.k!==k||crDib.vista!==vista) return; if(u) img.src=u; img.style.opacity=1; });
+}
+document.addEventListener('keydown',e=>{
+  const ov=document.getElementById('cr-dib-ov'); if(!ov||!ov.classList.contains('show')) return;
+  if(e.key==='Escape') crCerrarDibujo();
+  else if(e.key==='ArrowLeft') crVerDibujo(crDib.k-1);
+  else if(e.key==='ArrowRight') crVerDibujo(crDib.k+1);
+});
 // Arrastrar y soltar archivos
 document.addEventListener('DOMContentLoaded',()=>{
   const d=document.getElementById('cr-drop'); if(!d) return;
