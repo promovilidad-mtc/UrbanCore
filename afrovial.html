@@ -4337,7 +4337,12 @@ function showPage(p){
   if(p==='peatonal') renderPeatTable();
   if(p==='resultados' && S.hpGlobal && Object.keys(S.hp||{}).length) renderResultados();
   if(p==='graficas') renderGraficas();
-  if(p==='editor'){ edInit(); setTimeout(()=>edResize(),0); }
+  if(p==='editor'){ edInit(); setTimeout(()=>edResize(),0);
+    if(S.hpGlobal&&Object.keys(S.hp||{}).length&&edState.elements.some(e=>e.type==='hpval')){
+      const tt=edTurnoDelDibujo(), sel=document.getElementById('ed-turno-sel');
+      if(tt!=null){ if(sel) sel.value=String(tt); edRenderHPMovs(); edRefreshHPVals(true); }
+      else notify('<i class="fa-solid fa-circle-info"></i> Los números del dibujo no coinciden con ninguna hora punta. Elige el turno en el panel “Hora punta” para actualizarlos.',6500);
+    } }
   if(p==='export') updateProjectStatus();
 }
 
@@ -5001,15 +5006,35 @@ function edLoadBg(e){
 function edClearBg(){edState.bgImage=null;edBgImg=new Image();edBgImg.onload=()=>edRender();edSaveStorage();edRender();}
 
 // ── HP VALUES ──
-function edRefreshHPVals(){
-  const t=parseInt(document.getElementById('ed-turno-sel')?.value||1);
-  let updated=false;
+function edTurnoDelDibujo(){
+  const els=edState.elements.filter(e=>e.type==='hpval'&&!e.valorManual);
+  if(!els.length||!S.hpGlobal) return null;
+  const sel=parseInt(document.getElementById('ed-turno-sel')?.value||1);
+  let mejor=null, cMejor=0, empate=false;
+  [0,1,2,3].forEach(t=>{
+    const h=S.hpGlobal[t]; if(!h||h.row<0) return;
+    const c=els.filter(e=>edGetHPVal(e.movCode,t)===e.value).length;
+    if(c>cMejor){ mejor=t; cMejor=c; empate=false; }
+    else if(c===cMejor&&c>0){ empate=true; if(t===sel) mejor=t; }
+  });
+  if(!cMejor) return null;
+  if(empate&&mejor!==sel) return null;   // no se sabe de qué turno es: no se toca
+  return mejor;
+}
+function edRefreshHPVals(auto){
+  // auto: al abrir el Editor. No toca los valores escritos a mano, guarda un paso de deshacer y avisa.
+  const cambios=[];
   edState.elements.forEach(el=>{
     if(el.type!=='hpval') return;
+    if(auto&&el.valorManual) return;
     const newVal=edGetHPVal(el.movCode)||0;
-    if(el.value!==newVal){ el.value=newVal; updated=true; }
+    if(el.value!==newVal) cambios.push([el,newVal]);
   });
-  if(updated){ edRender(); edSaveStorage(); }
+  if(!cambios.length) return;
+  if(auto) edSaveHist();
+  cambios.forEach(([el,v])=>{ el.value=v; });
+  edRender(); edSaveStorage();
+  if(auto){ edUpdateElemList(); notify(`<i class="fa-solid fa-rotate"></i> Se actualizaron ${cambios.length} valor(es) del dibujo con los datos actuales (Ctrl+Z para deshacer).`,6000); }
 }
 
 // Las salidas juntan flujos de varios accesos: van en gris oscuro, no con el color de un acceso
@@ -5054,9 +5079,9 @@ function edGetMovLabel(movCode){
   return String(movCode);
 }
 
-function edGetHPVal(movCode){
+function edGetHPVal(movCode,tt){
   if(!S.hpGlobal||!S.hp) return 0;
-  const t=parseInt(document.getElementById('ed-turno-sel')?.value||1);
+  const t=tt!=null?tt:parseInt(document.getElementById('ed-turno-sel')?.value||1);
   const hpG=S.hpGlobal[t];
   const aveh=S.vehiculos.filter(v=>v.ok);
   // Total acceso
@@ -5253,7 +5278,8 @@ function edSetProp(id,prop,val){
   const k=id+'|'+prop, ahora=Date.now();
   if(k!==_edHistProp||ahora-_edHistPropT>1500) edSaveHist();
   _edHistProp=k; _edHistPropT=ahora;
-  el[prop]=val; edRender(); edUpdateElemList();
+  el[prop]=val; if(prop==='value'&&el.type==='hpval') el.valorManual=true;   // escrito a mano: no se refresca solo
+  edRender(); edUpdateElemList();
   // Antes se redibujaba el panel en cada movimiento del deslizador (se soltaba al arrastrar) y se
   // guardaba todo el dibujo con su imagen en cada paso. Ahora el guardado espera a que termines.
   clearTimeout(_edGuardarT); _edGuardarT=setTimeout(edSaveStorage,400);
